@@ -63,6 +63,7 @@ type ToDoGenerator struct {
 
 // NewToDoGenerator creates new generator for a source root
 func NewToDoGenerator(root string, include []string, exclude []string, minWords, minChars int) *ToDoGenerator {
+	log.Printf("Using source code root %v", root)
 	log.Printf("Using %v include filters", include)
 	ifilters := make([]*regexp.Regexp, 0, len(include))
 	for _, f := range include {
@@ -130,6 +131,7 @@ func (td *ToDoGenerator) Excludes(path string) bool {
 // Generate is an entry point to comment generation
 func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 	matchesCount := 0
+	totalFiles := 0
 	err := filepath.Walk(td.root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -138,6 +140,8 @@ func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 		if !info.Mode().IsRegular() {
 			return nil
 		}
+
+		totalFiles++
 
 		if !td.Includes(path) {
 			return nil
@@ -169,6 +173,7 @@ func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 		return nil, err
 	}
 
+	log.Printf("Scanned files: %v", totalFiles)
 	log.Printf("Matched files: %v", matchesCount)
 	td.commentsWG.Wait()
 	log.Printf("Found comments: %v", len(td.comments))
