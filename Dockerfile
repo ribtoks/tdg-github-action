@@ -3,6 +3,8 @@ FROM golang:1.13 as builder
 WORKDIR /app
 COPY . /app
 
+export GOFLAGS="-mod=vendor"
+
 RUN go get -d -v
 
 # Statically compile our app for use in a distroless container
