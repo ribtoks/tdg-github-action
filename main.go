@@ -47,6 +47,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Printf("Fetched github issues. count=%v", len(issues))
 
 	//env := tdglib.NewEnvironment(srcRoot)
 	td := tdglib.NewToDoGenerator(srcRoot,
@@ -59,6 +60,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Printf("Extracted TODO comments. count=%v", len(comments))
 
 	issueMap := make(map[string]*github.Issue)
 	for _, i := range issues {

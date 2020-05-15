@@ -1,13 +1,34 @@
-name: "Go Container Action Template"
-description: "Get started with Go Container actions"
-author: "Jacob Tomlinson"
+name: "TDG Action"
+description: "Sync code TODO to Issues"
+author: "Taras Kushnir"
 inputs:
-  myInput:
-    description: "Input to use"
-    default: "world"
+  REPO:
+    description: "Repository"
+    default: ""
+  TOKEN:
+    description: "Github token"
+    default: ""
+  INCLUDE_PATTERN:
+    description: "Regexp for source files to include"
+    default: "*"
+  EXCLUDE_PATTERN:
+    description: "Regexp for source files to exclude"
+    default: ""
+  ROOT:
+    description: "Root directory for source code"
+    default: "."
+  MIN_WORDS:
+    description: "Minimum amount of words to create an issue"
+    default: "3"
+  MIN_CHARACTERS:
+    description: "Minimum amount of characters to create an issue"
+    default: "30"
+  DRY_RUN:
+    description: "Do not create or close real issues"
+    default: ""
+
 outputs:
-  myOutput:
-    description: "Output from the action"
+
 runs:
   using: "docker"
   image: "Dockerfile"
