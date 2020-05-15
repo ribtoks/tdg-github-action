@@ -28,6 +28,31 @@ func sourceRoot(root string) string {
 	return fmt.Sprintf("%s/%v", ghRoot, root)
 }
 
+func fetchGithubIssues(ctx context.Context, owner, repo string, client *github.Client) ([]*github.Issue, error) {
+	var allIssues []*github.Issue
+
+	opt := &github.IssueListByRepoOptions{
+		ListOptions: github.ListOptions{PerPage: defaultIssuesPerPage},
+	}
+
+	for {
+		issues, resp, err := client.Issues.ListByRepo(ctx, owner, repo, opt)
+		if err != nil {
+			return nil, err
+		}
+
+		allIssues = append(allIssues, issues...)
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.Page = resp.NextPage
+	}
+	log.Printf("Fetched github issues. count=%v", len(allIssues))
+	return allIssues, nil
+}
+
 func main() {
 	log.SetOutput(os.Stdout)
 
@@ -57,32 +82,24 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	client := github.NewClient(tc)
-	opt := &github.IssueListByRepoOptions{
-		ListOptions: github.ListOptions{PerPage: defaultIssuesPerPage},
+	issues, err := fetchGithubIssues(ctx, owner, repo, client)
+	if err != nil {
+		log.Panic(err)
 	}
 
-	var allIssues []*github.Issue
-
-	for {
-		issues, resp, err := client.Issues.ListByRepo(ctx, owner, repo, opt)
-		if err != nil {
-			log.Panic(err)
-		}
-
-		allIssues = append(allIssues, issues...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		opt.Page = resp.NextPage
+	includePatterns := make([]string, 0)
+	if len(includePattern) > 0 {
+		includePatterns = append(includePatterns, includePattern)
 	}
-	log.Printf("Fetched github issues. count=%v", len(allIssues))
 
+	excludePatterns := make([]string, 0)
+	if len(excludePattern) > 0 {
+		excludePatterns = append(excludePatterns, excludePattern)
+	}
 	//env := tdglib.NewEnvironment(srcRoot)
 	td := tdglib.NewToDoGenerator(srcRoot,
-		[]string{includePattern},
-		[]string{excludePattern},
+		includePatterns,
+		excludePatterns,
 		minWords,
 		minChars)
 
@@ -94,7 +111,7 @@ func main() {
 	log.Printf("Extracted TODO comments. count=%v", len(comments))
 
 	issueMap := make(map[string]*github.Issue)
-	for _, i := range allIssues {
+	for _, i := range issues {
 		issueMap[i.GetTitle()] = i
 	}
 
