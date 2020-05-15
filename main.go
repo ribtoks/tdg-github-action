@@ -14,17 +14,18 @@ import (
 )
 
 const (
-	defaultMinWords = 3
-	defaultMinChars = 30
-	ghRoot          = "/github/workspace"
+	defaultMinWords      = 3
+	defaultMinChars      = 30
+	defaultIssuesPerPage = 100
+	ghRoot               = "/github/workspace"
 )
 
 func sourceRoot(root string) string {
-	if strings.HasPrefix(root, ".") {
-		return fmt.Sprintf("%s/%s", ghRoot, root)
+	if strings.HasPrefix(root, "/") {
+		return ghRoot + root
 	}
 
-	return fmt.Sprintf("%s/.%v", ghRoot, root)
+	return fmt.Sprintf("%s/%v", ghRoot, root)
 }
 
 func main() {
@@ -57,19 +58,23 @@ func main() {
 
 	client := github.NewClient(tc)
 	opt := &github.IssueListByRepoOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: defaultIssuesPerPage},
 	}
 
 	var allIssues []*github.Issue
+
 	for {
 		issues, resp, err := client.Issues.ListByRepo(ctx, owner, repo, opt)
 		if err != nil {
 			log.Panic(err)
 		}
+
 		allIssues = append(allIssues, issues...)
+
 		if resp.NextPage == 0 {
 			break
 		}
+
 		opt.Page = resp.NextPage
 	}
 	log.Printf("Fetched github issues. count=%v", len(allIssues))
@@ -85,6 +90,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	log.Printf("Extracted TODO comments. count=%v", len(comments))
 
 	issueMap := make(map[string]*github.Issue)
@@ -96,6 +102,7 @@ func main() {
 		_, ok := issueMap[c.Title]
 		if !ok {
 			log.Printf("About to create an issue. title=%v", c.Title)
+
 			if dryRun {
 				log.Printf("Dry run mode.")
 				continue
