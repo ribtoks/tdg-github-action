@@ -26,6 +26,9 @@ inputs:
   DRY_RUN:
     description: "Do not create or close real issues"
     default: ""
+  LABEL:
+    description: "Label to add for new issues"
+    default: "todo"
 
 outputs:
 

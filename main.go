@@ -18,6 +18,8 @@ const (
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
+	log.Printf("Running in the repository %v", os.Getenv("REPO"))
 	r := strings.Split(os.Getenv("REPO"), "/")
 	owner, repo := r[0], r[1]
 	//label := os.Getenv("LABEL")
