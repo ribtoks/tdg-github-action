@@ -1,0 +1,13 @@
+name: "Go Container Action Template"
+description: "Get started with Go Container actions"
+author: "Jacob Tomlinson"
+inputs:
+  myInput:
+    description: "Input to use"
+    default: "world"
+outputs:
+  myOutput:
+    description: "Output from the action"
+runs:
+  using: "docker"
+  image: "Dockerfile"
