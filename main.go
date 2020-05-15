@@ -19,20 +19,22 @@ const (
 
 func main() {
 	log.SetOutput(os.Stdout)
-	log.Printf("Running in the repository %v", os.Getenv("REPO"))
-	r := strings.Split(os.Getenv("REPO"), "/")
+
+	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
 	owner, repo := r[0], r[1]
-	//label := os.Getenv("LABEL")
-	token := os.Getenv("TOKEN")
-	includePattern := os.Getenv("INCLUDE_PATTERN")
-	excludePattern := os.Getenv("EXCLUDE_PATTERN")
-	srcRoot := os.Getenv("ROOT")
-	minWords, err := strconv.Atoi(os.Getenv("MIN_WORDS"))
-	dryRun := len(os.Getenv("DRY_RUN")) > 0
+	//label := os.Getenv("INPUT_LABEL")
+	token := os.Getenv("INPUT_TOKEN")
+	includePattern := os.Getenv("INPUT_INCLUDE_PATTERN")
+	excludePattern := os.Getenv("INPUT_EXCLUDE_PATTERN")
+	srcRoot := os.Getenv("INPUT_ROOT")
+	dryRun := len(os.Getenv("INPUT_DRY_RUN")) > 0
+
+	minWords, err := strconv.Atoi(os.Getenv("INPUT_MIN_WORDS"))
 	if err != nil {
 		minWords = defaultMinWords
 	}
-	minChars, err := strconv.Atoi(os.Getenv("MIN_CHARACTERS"))
+
+	minChars, err := strconv.Atoi(os.Getenv("INPUT_MIN_CHARACTERS"))
 	if err != nil {
 		minChars = defaultMinChars
 	}
