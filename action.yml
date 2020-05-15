@@ -29,6 +29,9 @@ inputs:
   LABEL:
     description: "Label to add for new issues"
     default: "todo"
+  SHA:
+    description: "SHA value of the commit"
+    default: ""
 
 outputs:
 

@@ -17,6 +17,8 @@ const (
 	defaultMinWords      = 3
 	defaultMinChars      = 30
 	defaultIssuesPerPage = 100
+	contextLinesUp       = 3
+	contextLinesDown     = 7
 	ghRoot               = "/github/workspace"
 )
 
@@ -28,7 +30,17 @@ func sourceRoot(root string) string {
 	return fmt.Sprintf("%s/%v", ghRoot, root)
 }
 
-func fetchGithubIssues(ctx context.Context, owner, repo string, client *github.Client) ([]*github.Issue, error) {
+type service struct {
+	ctx    context.Context
+	owner  string
+	repo   string
+	label  string
+	sha    string
+	client *github.Client
+	dryRun bool
+}
+
+func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 	var allIssues []*github.Issue
 
 	opt := &github.IssueListByRepoOptions{
@@ -36,7 +48,7 @@ func fetchGithubIssues(ctx context.Context, owner, repo string, client *github.C
 	}
 
 	for {
-		issues, resp, err := client.Issues.ListByRepo(ctx, owner, repo, opt)
+		issues, resp, err := s.client.Issues.ListByRepo(s.ctx, s.owner, s.repo, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +62,50 @@ func fetchGithubIssues(ctx context.Context, owner, repo string, client *github.C
 		opt.Page = resp.NextPage
 	}
 	log.Printf("Fetched github issues. count=%v", len(allIssues))
+
 	return allIssues, nil
+}
+
+func (s *service) createFileLink(c *tdglib.ToDoComment) string {
+	start := c.Line - contextLinesUp
+	if start < 0 {
+		start = 0
+	}
+
+	end := c.Line + contextLinesDown
+	// https://github.com/{repo}/blob/{sha}{file}#L{startLines}-L{endLine}
+	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v", s.owner, s.repo, s.sha, c.File, start, end)
+}
+
+func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
+	for _, c := range comments {
+		_, ok := issueMap[c.Title]
+		if !ok {
+			body := c.Body
+			body += fmt.Sprintf("\n\nLine: %v\n%s", c.Line, s.createFileLink(c))
+
+			log.Printf("About to create an issue. title=%v body=%v", c.Title, c.Body)
+
+			if s.dryRun {
+				log.Printf("Dry run mode.")
+				continue
+			}
+
+			labels := []string{s.label}
+
+			issue := &github.IssueRequest{
+				Title:  &c.Title,
+				Body:   &body,
+				Labels: &labels,
+			}
+
+			if _, _, err := s.client.Issues.Create(s.ctx, s.owner, s.repo, issue); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func main() {
@@ -58,8 +113,9 @@ func main() {
 
 	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
 	owner, repo := r[0], r[1]
-	//label := os.Getenv("INPUT_LABEL")
+	label := os.Getenv("INPUT_LABEL")
 	token := os.Getenv("INPUT_TOKEN")
+	sha := os.Getenv("INPUT_SHA")
 	includePattern := os.Getenv("INPUT_INCLUDE_PATTERN")
 	excludePattern := os.Getenv("INPUT_EXCLUDE_PATTERN")
 	srcRoot := sourceRoot(os.Getenv("INPUT_ROOT"))
@@ -81,8 +137,17 @@ func main() {
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
-	client := github.NewClient(tc)
-	issues, err := fetchGithubIssues(ctx, owner, repo, client)
+	svc := &service{
+		ctx:    ctx,
+		client: github.NewClient(tc),
+		owner:  owner,
+		repo:   repo,
+		dryRun: dryRun,
+		label:  label,
+		sha:    sha,
+	}
+
+	issues, err := svc.fetchGithubIssues()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -115,15 +180,8 @@ func main() {
 		issueMap[i.GetTitle()] = i
 	}
 
-	for _, c := range comments {
-		_, ok := issueMap[c.Title]
-		if !ok {
-			log.Printf("About to create an issue. title=%v", c.Title)
-
-			if dryRun {
-				log.Printf("Dry run mode.")
-				continue
-			}
-		}
+	err = svc.openNewIssues(issueMap, comments)
+	if err != nil {
+		log.Panic(err)
 	}
 }
