@@ -3,7 +3,7 @@ FROM golang:1.13 as builder
 WORKDIR /app
 COPY . /app
 
-export GOFLAGS="-mod=vendor"
+ENV GOFLAGS="-mod=vendor"
 
 RUN go get -d -v
 

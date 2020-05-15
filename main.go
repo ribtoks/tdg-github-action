@@ -24,7 +24,7 @@ func main() {
 	token := os.Getenv("TOKEN")
 	includePattern := os.Getenv("INCLUDE_PATTERN")
 	excludePattern := os.Getenv("EXCLUDE_PATTERN")
-	srcRoot := os.Getenv("EXCLUDE_PATTERN")
+	srcRoot := os.Getenv("ROOT")
 	minWords, err := strconv.Atoi(os.Getenv("MIN_WORDS"))
 	dryRun := len(os.Getenv("DRY_RUN")) > 0
 	if err != nil {
