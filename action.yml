@@ -41,6 +41,9 @@ inputs:
   REF:
     description: "Github Ref that triggered the workflow (branch or tag)"
     default: ""
+  EXTENDED_LABELS:
+    description: "Create additional labels to mark branch, issue type etc."
+    default: "1"
 
 outputs:
 

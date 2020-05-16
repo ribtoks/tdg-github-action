@@ -3,7 +3,7 @@
 ![Build](https://github.com/ribtoks/tdg-github-action/workflows/Build/badge.svg)
 ![Integration Test](https://github.com/ribtoks/tdg-github-action/workflows/Integration%20Test/badge.svg)
 
-GitHub Action that will manage issues based on `TODO`/`FIXME`/`HACK` comments in the source code. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
+GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
 
 When a new todo comment is added, a new issue is created. When this comment is removed, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
@@ -46,6 +46,7 @@ jobs:
 | `SHA`  | SHA-1 value of the commit (required) |
 | `ROOT`  | Source code root (defaults to `.`) |
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
+| `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
 | `INCLUDE_PATTERN`  | Regexp to include source code files (includes all by default) |
 | `EXCLUDE_PATTERN`  | Regexp to exclude source code files (excludes none by default) |
 | `MIN_WORDS`  | Minimum number of words in the comment to become an issue (defaults to `3`) |
@@ -100,5 +101,3 @@ Example of the comment (everything but the first line is optional):
     // category=SomeCategory issue=123 estimate=30m author=alias
     // This is a multiline description of the issue
     // that will be in the "Body" property of the comment
-
-Currently this action only uses `issue` metadata (second line) if this is present.
