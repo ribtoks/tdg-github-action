@@ -5,13 +5,15 @@
 
 GitHub Action that will manage issues based on `TODO`/`FIXME`/`HACK` comments in the source code. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
 
-When a new todo comment is added, a new issue is created. When this comment is removed, the issue is closed. Each issue is added with a special label so you can build more automation on top of it. Please note that GitHub has 5000 requests per hour limit so if you are running it on fresh repository and you have lots of todos in comments, you may hit this limit.
+When a new todo comment is added, a new issue is created. When this comment is removed, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
 ## Screenshot
 
 ![TDG result](screenshot.png "Example of created issue")
 
 ## Usage
+
+> Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
 
 Create a workflow file in your .github/workflows/ directory with the following contents:
 
@@ -90,6 +92,8 @@ jobs:
 
 ### TODO comments
 
+Comments are parsed using [tdg](https://github.com/ribtoks/tdg). Supported comments: `//`, `#`, `%`, `;`, `*`.
+
 Example of the comment (everything but the first line is optional):
 
     // TODO: This is title of the issue to create
@@ -97,3 +101,4 @@ Example of the comment (everything but the first line is optional):
     // This is a multiline description of the issue
     // that will be in the "Body" property of the comment
 
+Currently this action only uses `issue` metadata (second line) if this is present.
