@@ -50,4 +50,4 @@ runs:
 
 branding:
   icon: "check-square"
-  color: "#2bb44b"
+  color: "green"
