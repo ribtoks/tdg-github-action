@@ -8,9 +8,8 @@ jobs:
       - name: Self test
         id: selftest
 
-        # Put your action repo here
-        uses: jacobtomlinson/go-container-action@master
+        uses: ribtoks/tdg-github-action@master
 
       - name: Check outputs
         run: |
-          test "${{ steps.selftest.outputs.myOutput }}" == "Hello world"
+          test "${{ steps.selftest.outputs.scannedIssues }}" == "0"

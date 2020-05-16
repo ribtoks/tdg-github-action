@@ -16,6 +16,7 @@ import (
 const (
 	defaultMinWords      = 3
 	defaultMinChars      = 30
+	defaultLimit         = 0
 	defaultIssuesPerPage = 100
 	contextLinesUp       = 3
 	contextLinesDown     = 7
@@ -41,6 +42,7 @@ type env struct {
 	excludeRE string
 	minWords  int
 	minChars  int
+	limit     int
 	dryRun    bool
 }
 
@@ -50,7 +52,8 @@ type service struct {
 	env    *env
 }
 
-func (e *env) init() {
+func environment() *env {
+	e := &env{}
 	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
 	e.owner, e.repo = r[0], r[1]
 	e.label = os.Getenv("INPUT_LABEL")
@@ -62,6 +65,7 @@ func (e *env) init() {
 	e.dryRun = len(os.Getenv("INPUT_DRY_RUN")) > 0
 
 	var err error
+
 	e.minWords, err = strconv.Atoi(os.Getenv("INPUT_MIN_WORDS"))
 	if err != nil {
 		e.minWords = defaultMinWords
@@ -71,6 +75,13 @@ func (e *env) init() {
 	if err != nil {
 		e.minChars = defaultMinChars
 	}
+
+	e.limit, err = strconv.Atoi(os.Getenv("INPUT_LIMIT"))
+	if err != nil {
+		e.limit = defaultLimit
+	}
+
+	return e
 }
 
 func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
@@ -107,16 +118,29 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 	}
 
 	end := c.Line + contextLinesDown
+
+	root := strings.TrimPrefix(s.env.root, "/")
+	root = strings.TrimSuffix(root, "/")
+
+	filepath := fmt.Sprintf("%v/%v", root, c.File)
+
 	// https://github.com/{repo}/blob/{sha}{file}#L{startLines}-L{endLine}
-	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v", s.env.owner, s.env.repo, s.env.sha, c.File, start, end)
+	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v",
+		s.env.owner, s.env.repo, s.env.sha, filepath, start, end)
 }
 
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
+	count := 0
+
 	for _, c := range comments {
 		_, ok := issueMap[c.Title]
 		if !ok {
-			body := c.Body
-			body += fmt.Sprintf("\n\nLine: %v\n%s", c.Line, s.createFileLink(c))
+			body := c.Body + "\n\n"
+			if c.Issue > 0 {
+				body += fmt.Sprintf("Parent issue: #%v\n", c.Issue)
+			}
+
+			body += fmt.Sprintf("Line: %v\n%s", c.Line, s.createFileLink(c))
 
 			log.Printf("About to create an issue. title=%v body=%v", c.Title, body)
 
@@ -136,6 +160,12 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			if _, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, issue); err != nil {
 				return err
 			}
+
+			count++
+			if s.env.limit > 0 && count >= s.env.limit {
+				log.Printf("Exceeded limit of issues to create. limit=%v", s.env.limit)
+				break
+			}
 		}
 	}
 
@@ -144,9 +174,8 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 
 func main() {
 	log.SetOutput(os.Stdout)
-	env := &env{}
-	env.init()
 
+	env := environment()
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: env.token},
@@ -173,7 +202,7 @@ func main() {
 	if len(env.excludeRE) > 0 {
 		excludePatterns = append(excludePatterns, env.excludeRE)
 	}
-	//env := tdglib.NewEnvironment(srcRoot)
+
 	td := tdglib.NewToDoGenerator(env.root,
 		includePatterns,
 		excludePatterns,
@@ -196,4 +225,6 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	fmt.Println(fmt.Sprintf(`::set-output name=scannedIssues::%s`, "1"))
 }
