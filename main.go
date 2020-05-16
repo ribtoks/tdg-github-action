@@ -145,6 +145,7 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 
 	opt := &github.IssueListByRepoOptions{
 		Labels:      []string{s.env.label},
+		State:       "all",
 		ListOptions: github.ListOptions{PerPage: defaultIssuesPerPage},
 	}
 
