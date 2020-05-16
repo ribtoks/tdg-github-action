@@ -79,18 +79,19 @@ func environment() *env {
 	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
 	ref := os.Getenv("INPUT_REF")
 	e := &env{
-		owner:          r[0],
-		repo:           r[1],
-		ref:            ref,
-		branch:         branch(ref),
-		label:          os.Getenv("INPUT_LABEL"),
-		token:          os.Getenv("INPUT_TOKEN"),
-		sha:            os.Getenv("INPUT_SHA"),
-		includeRE:      os.Getenv("INPUT_INCLUDE_PATTERN"),
-		excludeRE:      os.Getenv("INPUT_EXCLUDE_PATTERN"),
-		root:           os.Getenv("INPUT_ROOT"),
-		dryRun:         flagToBool(os.Getenv("INPUT_DRY_RUN")),
-		extendedLabels: flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
+		ref:               ref,
+		owner:             r[0],
+		repo:              r[1],
+		branch:            branch(ref),
+		sha:               os.Getenv("INPUT_SHA"),
+		root:              os.Getenv("INPUT_ROOT"),
+		label:             os.Getenv("INPUT_LABEL"),
+		token:             os.Getenv("INPUT_TOKEN"),
+		includeRE:         os.Getenv("INPUT_INCLUDE_PATTERN"),
+		excludeRE:         os.Getenv("INPUT_EXCLUDE_PATTERN"),
+		dryRun:            flagToBool(os.Getenv("INPUT_DRY_RUN")),
+		extendedLabels:    flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
+		closeOnSameBranch: flagToBool(os.Getenv("INPUT_CLOSE_ON_SAME_BRANCH")),
 	}
 
 	var err error
