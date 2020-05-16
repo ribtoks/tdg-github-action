@@ -7,9 +7,13 @@ GitHub Action that will manage issues based on `TODO`/`FIXME`/`HACK` comments in
 
 When a new todo comment is added, a new issue is created. When this comment is removed, the issue is closed. Each issue is added with a special label so you can build more automation on top of it. Please note that GitHub has 5000 requests per hour limit so if you are running it on fresh repository and you have lots of todos in comments, you may hit this limit.
 
+## Screenshot
+
+![TDG result](screenshot.png "Example of created issue")
+
 ## Usage
 
-In order to use this action, you only need to create a workflow in your repository or modify existing one.
+Create a workflow file in your .github/workflows/ directory with the following contents:
 
 ### Example workflow
 
@@ -29,7 +33,6 @@ jobs:
         SHA: ${{ github.sha }}
         REF: ${{ github.ref }}
 ```
-
 
 ### Inputs
 
@@ -57,6 +60,8 @@ jobs:
 
 ## Examples
 
+### Workflow
+
 ```yaml
 name: TDG
 on: [push, pull_request]
@@ -81,4 +86,14 @@ jobs:
         INCLUDE_PATTERN: "\\.(cpp|h)$"
 ```
 
-Note: you need to escape slashes in yaml.
+> **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
+
+### TODO comments
+
+Example of the comment (everything but the first line is optional):
+
+    // TODO: This is title of the issue to create
+    // category=SomeCategory issue=123 estimate=30m author=alias
+    // This is a multiline description of the issue
+    // that will be in the "Body" property of the comment
+
