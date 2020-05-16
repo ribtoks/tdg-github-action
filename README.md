@@ -15,7 +15,7 @@ When a new todo comment is added, a new issue is created. When this comment is r
 
 Create a workflow file in your .github/workflows/ directory with the following contents:
 
-### Example workflow
+### Basic example
 
 ```yaml
 name: TDG workflow
@@ -34,7 +34,7 @@ jobs:
         REF: ${{ github.ref }}
 ```
 
-> Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
+> **NOTE:** Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
 
 ### Inputs
 
@@ -49,14 +49,21 @@ jobs:
 | `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
 | `CLOSE_ON_SAME_BRANCH`  | Close issues only if they are missing from the same branch as they were created on (by default) |
 | `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (none by default) |
-| `INCLUDE_PATTERN`  | Regexp to include source code files (includes all by default) |
-| `EXCLUDE_PATTERN`  | Regexp to exclude source code files (excludes none by default) |
+| `INCLUDE_PATTERN`  | Regex to include source code files (includes all by default) |
+| `EXCLUDE_PATTERN`  | Regex to exclude source code files (excludes none by default) |
 | `MIN_WORDS`  | Minimum number of words in the comment to become an issue (defaults to `3`) |
 | `MIN_CHARACTERS`  | Minimum number of characters in the comment to become an issue (defaults to `30`) |
 | `DRY_RUN`  | Do not open or close real issues (used for debugging) |
 | `ADD_LIMIT`  | Upper cap on the number of issues to create (defaults to `0` - unlimited) |
 | `CLOSE_LIMIT`  | Upper cap on the number of issues to close (defaults to `0` - unlimited) |
 
+> **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
+
+Flag values like `CLOSE_ON_SAME_BRANCH` or `DRY_RUN` use values `1`/`true`/`y` as ON switch.
+
+In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu.
+
+In case you are disabling `EXTENDED_LABELS`, then `CLOSE_ON_SAME_BRANCH` logic will be broken since there will be no knowledge on which branch the issue was created (for new issues), effectively making it disabled.
 
 ### Outputs
 
@@ -93,11 +100,7 @@ jobs:
         INCLUDE_PATTERN: "\\.(cpp|h)$"
 ```
 
-> **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
-
-In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu.
-
-In case you are disabling `EXTENDED_LABELS`, then `CLOSE_ON_SAME_BRANCH` logic will be broken since there will be no knowledge on which branch the issue was created (for new issues).
+Note escaped regex.
 
 ### TODO comments
 
