@@ -304,26 +304,31 @@ func (s *service) canCloseIssue(issue *github.Issue) bool {
 		return true
 	}
 
-	opts := &github.ListOptions{}
-	labels, _, err := s.client.Issues.ListLabelsByIssue(s.ctx, s.env.owner, s.env.repo, issue.GetNumber(), opts)
+	// opts := &github.ListOptions{}
+	// labels, _, err := s.client.Issues.ListLabelsByIssue(s.ctx, s.env.owner, s.env.repo, issue.GetNumber(), opts)
+	// if err != nil {
+	// 	log.Printf("Error while listing labels. issue=%v err=%v", issue.GetID(), err)
+	// 	return false
+	// }
+	labels := issue.Labels
 
-	if err != nil {
-		log.Printf("Error while listing labels. issue=%v err=%v", issue.GetID(), err)
-		return false
-	}
+	log.Printf("Retrieved issue labels. issue=%v labels=%v", issue.GetID(), len(labels))
 
 	anyBranch := false
 
 	for _, l := range labels {
-		if strings.HasPrefix(labelBranchPrefix, l.GetName()) {
+		name := l.GetName()
+		if strings.HasPrefix(name, labelBranchPrefix) {
 			anyBranch = true
-			branch := strings.TrimPrefix(l.GetName(), labelBranchPrefix)
+			branch := strings.TrimPrefix(name, labelBranchPrefix)
 
 			if branch == s.env.branch {
 				return true
 			}
 		}
 	}
+
+	log.Printf("Checking issue labels. issue=%v any_branch=%v", issue.GetID(), anyBranch)
 
 	// if the issues does not have a branch tag, assume we can close it
 	return !anyBranch
