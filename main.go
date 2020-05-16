@@ -39,6 +39,7 @@ type env struct {
 	label      string
 	token      string
 	sha        string
+	ref        string
 	includeRE  string
 	excludeRE  string
 	minWords   int
@@ -65,6 +66,7 @@ func environment() *env {
 	e.label = os.Getenv("INPUT_LABEL")
 	e.token = os.Getenv("INPUT_TOKEN")
 	e.sha = os.Getenv("INPUT_SHA")
+	e.ref = os.Getenv("INPUT_REF")
 	e.includeRE = os.Getenv("INPUT_INCLUDE_PATTERN")
 	e.excludeRE = os.Getenv("INPUT_EXCLUDE_PATTERN")
 	e.root = os.Getenv("INPUT_ROOT")
@@ -93,6 +95,18 @@ func environment() *env {
 	}
 
 	return e
+}
+
+func (e *env) debugPrint() {
+	log.Printf("Repo: %v", e.repo)
+	log.Printf("Ref: %v", e.ref)
+	log.Printf("Sha: %v", e.sha)
+	log.Printf("Root: %v", e.root)
+	log.Printf("Label: %v", e.label)
+	log.Printf("Min words: %v", e.minWords)
+	log.Printf("Min chars: %v", e.minChars)
+	log.Printf("Add limit: %v", e.addLimit)
+	log.Printf("Close limit: %v", e.closeLimit)
 }
 
 func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
@@ -243,6 +257,8 @@ func main() {
 		client: github.NewClient(tc),
 		env:    env,
 	}
+
+	env.debugPrint()
 
 	issues, err := svc.fetchGithubIssues()
 	if err != nil {
