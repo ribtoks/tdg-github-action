@@ -52,6 +52,10 @@ type service struct {
 	env    *env
 }
 
+func (e *env) sourceRoot() string {
+	return sourceRoot(e.root)
+}
+
 func environment() *env {
 	e := &env{}
 	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
@@ -61,7 +65,7 @@ func environment() *env {
 	e.sha = os.Getenv("INPUT_SHA")
 	e.includeRE = os.Getenv("INPUT_INCLUDE_PATTERN")
 	e.excludeRE = os.Getenv("INPUT_EXCLUDE_PATTERN")
-	e.root = sourceRoot(os.Getenv("INPUT_ROOT"))
+	e.root = os.Getenv("INPUT_ROOT")
 	e.dryRun = len(os.Getenv("INPUT_DRY_RUN")) > 0
 
 	var err error
@@ -206,7 +210,7 @@ func main() {
 		excludePatterns = append(excludePatterns, env.excludeRE)
 	}
 
-	td := tdglib.NewToDoGenerator(env.root,
+	td := tdglib.NewToDoGenerator(env.sourceRoot(),
 		includePatterns,
 		excludePatterns,
 		env.minWords,
