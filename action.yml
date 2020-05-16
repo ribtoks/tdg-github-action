@@ -1,5 +1,5 @@
-name: "TDG Action"
-description: "Sync code TODO to Issues"
+name: "Track TODO Action"
+description: "Sync TODO/BUG/FIXME comments with GitHub Issues"
 author: "Taras Kushnir"
 inputs:
   REPO:
