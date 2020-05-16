@@ -1,4 +1,4 @@
-# Github Action that uses TDG
+# Turn your TODO comments into GitHub Issues
 
 ![Build](https://github.com/ribtoks/tdg-github-action/workflows/Build/badge.svg)
 ![Integration Test](https://github.com/ribtoks/tdg-github-action/workflows/Integration%20Test/badge.svg)
