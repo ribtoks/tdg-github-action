@@ -117,7 +117,7 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 
 		opt.Page = resp.NextPage
 	}
-	log.Printf("Fetched github issues. count=%v", len(allIssues))
+	log.Printf("Fetched github todo issues. count=%v label=%v", len(allIssues), s.env.label)
 
 	return allIssues, nil
 }
