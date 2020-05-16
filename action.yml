@@ -10,7 +10,7 @@ inputs:
     default: ""
   INCLUDE_PATTERN:
     description: "Regexp for source files to include"
-    default: "*"
+    default: ""
   EXCLUDE_PATTERN:
     description: "Regexp for source files to exclude"
     default: ""
@@ -28,9 +28,12 @@ inputs:
     default: ""
   LABEL:
     description: "Label to add for new issues"
-    default: "todo"
+    default: "todo comment"
   SHA:
     description: "SHA value of the commit"
+    default: ""
+  REF:
+    description: "Github Ref that triggered the workflow (branch or tag)"
     default: ""
 
 outputs:

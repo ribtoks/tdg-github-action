@@ -30,25 +30,59 @@ func sourceRoot(root string) string {
 	return fmt.Sprintf("%s/%v", ghRoot, root)
 }
 
+type env struct {
+	root      string
+	owner     string
+	repo      string
+	label     string
+	token     string
+	sha       string
+	includeRE string
+	excludeRE string
+	minWords  int
+	minChars  int
+	dryRun    bool
+}
+
 type service struct {
 	ctx    context.Context
-	owner  string
-	repo   string
-	label  string
-	sha    string
 	client *github.Client
-	dryRun bool
+	env    *env
+}
+
+func (e *env) init() {
+	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
+	e.owner, e.repo = r[0], r[1]
+	e.label = os.Getenv("INPUT_LABEL")
+	e.token = os.Getenv("INPUT_TOKEN")
+	e.sha = os.Getenv("INPUT_SHA")
+	e.includeRE = os.Getenv("INPUT_INCLUDE_PATTERN")
+	e.excludeRE = os.Getenv("INPUT_EXCLUDE_PATTERN")
+	e.root = sourceRoot(os.Getenv("INPUT_ROOT"))
+	e.dryRun = len(os.Getenv("INPUT_DRY_RUN")) > 0
+
+	var err error
+	e.minWords, err = strconv.Atoi(os.Getenv("INPUT_MIN_WORDS"))
+	if err != nil {
+		e.minWords = defaultMinWords
+	}
+
+	e.minChars, err = strconv.Atoi(os.Getenv("INPUT_MIN_CHARACTERS"))
+	if err != nil {
+		e.minChars = defaultMinChars
+	}
 }
 
 func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 	var allIssues []*github.Issue
 
 	opt := &github.IssueListByRepoOptions{
+		Labels:      []string{s.env.label},
 		ListOptions: github.ListOptions{PerPage: defaultIssuesPerPage},
 	}
 
 	for {
-		issues, resp, err := s.client.Issues.ListByRepo(s.ctx, s.owner, s.repo, opt)
+		issues, resp, err := s.client.Issues.ListByRepo(s.ctx, s.env.owner, s.env.repo, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +108,7 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 
 	end := c.Line + contextLinesDown
 	// https://github.com/{repo}/blob/{sha}{file}#L{startLines}-L{endLine}
-	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v", s.owner, s.repo, s.sha, c.File, start, end)
+	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v", s.env.owner, s.env.repo, s.env.sha, c.File, start, end)
 }
 
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
@@ -84,14 +118,14 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			body := c.Body
 			body += fmt.Sprintf("\n\nLine: %v\n%s", c.Line, s.createFileLink(c))
 
-			log.Printf("About to create an issue. title=%v body=%v", c.Title, c.Body)
+			log.Printf("About to create an issue. title=%v body=%v", c.Title, body)
 
-			if s.dryRun {
+			if s.env.dryRun {
 				log.Printf("Dry run mode.")
 				continue
 			}
 
-			labels := []string{s.label}
+			labels := []string{s.env.label}
 
 			issue := &github.IssueRequest{
 				Title:  &c.Title,
@@ -99,7 +133,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 				Labels: &labels,
 			}
 
-			if _, _, err := s.client.Issues.Create(s.ctx, s.owner, s.repo, issue); err != nil {
+			if _, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, issue); err != nil {
 				return err
 			}
 		}
@@ -110,41 +144,19 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 
 func main() {
 	log.SetOutput(os.Stdout)
-
-	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
-	owner, repo := r[0], r[1]
-	label := os.Getenv("INPUT_LABEL")
-	token := os.Getenv("INPUT_TOKEN")
-	sha := os.Getenv("INPUT_SHA")
-	includePattern := os.Getenv("INPUT_INCLUDE_PATTERN")
-	excludePattern := os.Getenv("INPUT_EXCLUDE_PATTERN")
-	srcRoot := sourceRoot(os.Getenv("INPUT_ROOT"))
-	dryRun := len(os.Getenv("INPUT_DRY_RUN")) > 0
-
-	minWords, err := strconv.Atoi(os.Getenv("INPUT_MIN_WORDS"))
-	if err != nil {
-		minWords = defaultMinWords
-	}
-
-	minChars, err := strconv.Atoi(os.Getenv("INPUT_MIN_CHARACTERS"))
-	if err != nil {
-		minChars = defaultMinChars
-	}
+	env := &env{}
+	env.init()
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
+		&oauth2.Token{AccessToken: env.token},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
 	svc := &service{
 		ctx:    ctx,
 		client: github.NewClient(tc),
-		owner:  owner,
-		repo:   repo,
-		dryRun: dryRun,
-		label:  label,
-		sha:    sha,
+		env:    env,
 	}
 
 	issues, err := svc.fetchGithubIssues()
@@ -153,20 +165,20 @@ func main() {
 	}
 
 	includePatterns := make([]string, 0)
-	if len(includePattern) > 0 {
-		includePatterns = append(includePatterns, includePattern)
+	if len(env.includeRE) > 0 {
+		includePatterns = append(includePatterns, env.includeRE)
 	}
 
 	excludePatterns := make([]string, 0)
-	if len(excludePattern) > 0 {
-		excludePatterns = append(excludePatterns, excludePattern)
+	if len(env.excludeRE) > 0 {
+		excludePatterns = append(excludePatterns, env.excludeRE)
 	}
 	//env := tdglib.NewEnvironment(srcRoot)
-	td := tdglib.NewToDoGenerator(srcRoot,
+	td := tdglib.NewToDoGenerator(env.root,
 		includePatterns,
 		excludePatterns,
-		minWords,
-		minChars)
+		env.minWords,
+		env.minChars)
 
 	comments, err := td.Generate()
 	if err != nil {
