@@ -1,5 +1,5 @@
 name: "Track TODO Action"
-description: "Sync TODO/BUG/FIXME comments with GitHub Issues"
+description: "Sync TODO/BUG/FIXME comments with GitHub Issues and Projects"
 author: "Taras Kushnir"
 inputs:
   REPO:

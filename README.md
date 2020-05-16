@@ -3,7 +3,7 @@
 ![Build](https://github.com/ribtoks/tdg-github-action/workflows/Build/badge.svg)
 ![Integration Test](https://github.com/ribtoks/tdg-github-action/workflows/Integration%20Test/badge.svg)
 
-GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
+GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Optionally issues are added to a Project Column that you specify. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
 
 When a new todo comment is added, a new issue is created. When this comment is removed, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
@@ -12,8 +12,6 @@ When a new todo comment is added, a new issue is created. When this comment is r
 ![TDG result](screenshot.png "Example of created issue")
 
 ## Usage
-
-> Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
 
 Create a workflow file in your .github/workflows/ directory with the following contents:
 
@@ -36,6 +34,8 @@ jobs:
         REF: ${{ github.ref }}
 ```
 
+> Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
+
 ### Inputs
 
 | Input                                             | Description                                        |
@@ -47,7 +47,7 @@ jobs:
 | `ROOT`  | Source code root (defaults to `.`) |
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
 | `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
-| `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (defaults to `-1`) |
+| `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (none by default) |
 | `INCLUDE_PATTERN`  | Regexp to include source code files (includes all by default) |
 | `EXCLUDE_PATTERN`  | Regexp to exclude source code files (excludes none by default) |
 | `MIN_WORDS`  | Minimum number of words in the comment to become an issue (defaults to `3`) |
@@ -55,6 +55,7 @@ jobs:
 | `DRY_RUN`  | Do not open or close real issues (used for debugging) |
 | `ADD_LIMIT`  | Upper cap on the number of issues to create (defaults to `0` - unlimited) |
 | `CLOSE_LIMIT`  | Upper cap on the number of issues to close (defaults to `0` - unlimited) |
+
 
 ### Outputs
 
@@ -87,10 +88,13 @@ jobs:
         ADD_LIMIT: 1
         CLOSE_LIMIT: 1
         ROOT: "src"
+        PROJECT_COLUMN_ID: 824533
         INCLUDE_PATTERN: "\\.(cpp|h)$"
 ```
 
 > **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
+
+In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu.
 
 ### TODO comments
 

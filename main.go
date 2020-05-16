@@ -368,11 +368,13 @@ func main() {
 		issueMap[i.GetTitle()] = i
 	}
 
+	// do NOT execute those operations in parallel to stay in GH request rate limits
 	err = svc.openNewIssues(issueMap, comments)
 	if err != nil {
 		log.Panic(err)
 	}
 
+	// do NOT execute those operations in parallel to stay in GH request rate limits
 	err = svc.closeMissingIssues(issueMap, comments)
 	if err != nil {
 		log.Panic(err)
