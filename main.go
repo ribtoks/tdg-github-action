@@ -304,17 +304,10 @@ func (s *service) canCloseIssue(issue *github.Issue) bool {
 		return true
 	}
 
-	// opts := &github.ListOptions{}
-	// labels, _, err := s.client.Issues.ListLabelsByIssue(s.ctx, s.env.owner, s.env.repo, issue.GetNumber(), opts)
-	// if err != nil {
-	// 	log.Printf("Error while listing labels. issue=%v err=%v", issue.GetID(), err)
-	// 	return false
-	// }
 	labels := issue.Labels
+	anyBranch := false
 
 	log.Printf("Retrieved issue labels. issue=%v labels=%v", issue.GetID(), len(labels))
-
-	anyBranch := false
 
 	for _, l := range labels {
 		name := l.GetName()
