@@ -1,5 +1,15 @@
 name: Build
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - '*'
+    paths-ignore:
+    - 'docs/**'
+    - '**/README.md'
+    tags-ignore:
+    - '*.*'
+  pull_request:
+    types: [opened, reopened]
 jobs:
   build:
     name: Build
