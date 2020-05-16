@@ -122,9 +122,12 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 	root := strings.TrimPrefix(s.env.root, "/")
 	root = strings.TrimSuffix(root, "/")
 
-	filepath := fmt.Sprintf("%v/%v", root, c.File)
+	filepath := c.File
+	if root != "." {
+		filepath = fmt.Sprintf("%v/%v", root, c.File)
+	}
 
-	// https://github.com/{repo}/blob/{sha}{file}#L{startLines}-L{endLine}
+	// https://github.com/{repo}/blob/{sha}/{file}#L{startLines}-L{endLine}
 	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v",
 		s.env.owner, s.env.repo, s.env.sha, filepath, start, end)
 }

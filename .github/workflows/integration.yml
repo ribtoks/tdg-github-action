@@ -15,7 +15,7 @@ jobs:
           SHA: ${{ github.sha }}
           REF: ${{ github.ref }}
           DRY_RUN: 1
-          EXCLUDE_PATTERN: "^vendor"
+          EXCLUDE_PATTERN: "\\.*/vendor/"
       - name: Check outputs
         run: |
-          test "${{ steps.selftest.outputs.scannedIssues }}" == "0"
+          test "${{ steps.selftest.outputs.scannedIssues }}" == "1"
