@@ -47,3 +47,7 @@ outputs:
 runs:
   using: "docker"
   image: "Dockerfile"
+
+branding:
+  icon: "check-square"
+  color: "#2bb44b"
