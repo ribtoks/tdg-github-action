@@ -5,10 +5,10 @@ github.com/google/go-github/v31 v31.0.0 h1:JJUxlP9lFK+ziXKimTCprajMApV1ecWD4NB6C
 github.com/google/go-github/v31 v31.0.0/go.mod h1:NQPZol8/1sMoWYGN2yaALIBytu17gAWfhbweiEed3pM=
 github.com/google/go-querystring v1.0.0 h1:Xkwi/a1rcvNg1PPYe5vI8GbeBY/jrVuDX5ASuANWTrk=
 github.com/google/go-querystring v1.0.0/go.mod h1:odCYkC5MyYFN7vkCjXpyrEuKhc/BUO6wN/zVPAxq5ck=
-github.com/ribtoks/tdg v0.0.0-20200515180817-13ac48b03c19 h1:kw3SlOpLr1CZUKyPRDUi+Fk8bJhsLAjZAJAjjHcAwC8=
-github.com/ribtoks/tdg v0.0.0-20200515180817-13ac48b03c19/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
 github.com/ribtoks/tdg v0.0.0-20200515192033-b92d0e0bf73e h1:Eo6IRRZyYiN9qKx4RWNwUwQGlcfWpiCZGlegzdhCCzk=
 github.com/ribtoks/tdg v0.0.0-20200515192033-b92d0e0bf73e/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
+github.com/ribtoks/tdg v0.0.0-20200516090954-4c148d8c94b4 h1:o0/WFBonGuTIwD13hqsmIPfU2V/Zv3VCJ+TAwggZceI=
+github.com/ribtoks/tdg v0.0.0-20200516090954-4c148d8c94b4/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26 h1:E0lEWrifmR0ACbGf5PLji1XbW6rtIXLHCXO/YOqi0AE=
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26/go.mod h1:TQpdgg7I9+PFIkatlx/dnZyZb4iZyCUx1HJj4rXi3+E=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=

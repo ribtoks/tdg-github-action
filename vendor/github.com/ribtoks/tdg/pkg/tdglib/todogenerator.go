@@ -446,7 +446,7 @@ func (td *ToDoGenerator) parseFile(path string) {
 			if ctype, title, author := parseToDoTitle(c); title != nil {
 				// do we need to finalize previous
 				if lastType != "" {
-					td.accountComment(path, lastStart, lastType, lastAuthor, todo)
+					td.accountComment(path, lastStart+1, lastType, lastAuthor, todo)
 				}
 				// construct new one
 				lastAuthor = string(author)
@@ -461,13 +461,13 @@ func (td *ToDoGenerator) parseFile(path string) {
 		} else {
 			// not a comment anymore: finalize
 			if lastType != "" {
-				td.accountComment(path, lastStart, lastType, lastAuthor, todo)
+				td.accountComment(path, lastStart+1, lastType, lastAuthor, todo)
 				lastType = ""
 			}
 		}
 	}
 	// detect todo item at the end of the file
 	if lastType != "" {
-		td.accountComment(path, lastStart, lastType, lastAuthor, todo)
+		td.accountComment(path, lastStart+1, lastType, lastAuthor, todo)
 	}
 }

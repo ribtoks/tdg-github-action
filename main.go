@@ -193,7 +193,8 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 			estimate := ""
 
 			if minutes >= hourMinutes {
-				estimate = fmt.Sprintf("%.1fh", c.Estimate)
+				// -1 means use the smallest number of digits
+				estimate = strconv.FormatFloat(c.Estimate, 'f', -1, 32) + "h"
 			} else {
 				estimate = fmt.Sprintf("%vm", minutes)
 			}
