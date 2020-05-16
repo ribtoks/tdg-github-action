@@ -36,22 +36,23 @@ func sourceRoot(root string) string {
 }
 
 type env struct {
-	root           string
-	owner          string
-	repo           string
-	label          string
-	token          string
-	sha            string
-	ref            string
-	branch         string
-	includeRE      string
-	excludeRE      string
-	minWords       int
-	minChars       int
-	addLimit       int
-	closeLimit     int
-	extendedLabels bool
-	dryRun         bool
+	root            string
+	owner           string
+	repo            string
+	label           string
+	token           string
+	sha             string
+	ref             string
+	branch          string
+	includeRE       string
+	excludeRE       string
+	projectColumnID int64
+	minWords        int
+	minChars        int
+	addLimit        int
+	closeLimit      int
+	extendedLabels  bool
+	dryRun          bool
 }
 
 type service struct {
@@ -101,6 +102,11 @@ func environment() *env {
 	e.closeLimit, err = strconv.Atoi(os.Getenv("INPUT_CLOSE_LIMIT"))
 	if err != nil {
 		e.closeLimit = defaultCloseLimit
+	}
+
+	e.projectColumnID, err = strconv.ParseInt(os.Getenv("INPUT_PROJECT_COLUMN_ID"), 10, 64)
+	if err != nil {
+		e.projectColumnID = -1
 	}
 
 	return e
@@ -206,6 +212,18 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 	return labels
 }
 
+func (s *service) createProjectCard(issue *github.Issue) {
+	opts := &github.ProjectCardOptions{
+		ContentType: "Issue",
+		ContentID:   issue.GetID(),
+	}
+	_, _, err := s.client.Projects.CreateProjectCard(s.ctx, s.env.projectColumnID, opts)
+
+	if err != nil {
+		log.Printf("Failed to create a project card. err=%v", err)
+	}
+}
+
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
 	count := 0
 
@@ -231,14 +249,19 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			}
 
 			labels := s.labels(c)
-			issue := &github.IssueRequest{
+			req := &github.IssueRequest{
 				Title:  &c.Title,
 				Body:   &body,
 				Labels: &labels,
 			}
 
-			if _, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, issue); err != nil {
+			issue, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, req)
+			if err != nil {
 				return err
+			}
+
+			if s.env.projectColumnID != -1 {
+				s.createProjectCard(issue)
 			}
 
 			count++

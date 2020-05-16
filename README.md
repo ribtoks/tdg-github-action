@@ -47,6 +47,7 @@ jobs:
 | `ROOT`  | Source code root (defaults to `.`) |
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
 | `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
+| `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (defaults to `-1`) |
 | `INCLUDE_PATTERN`  | Regexp to include source code files (includes all by default) |
 | `EXCLUDE_PATTERN`  | Regexp to exclude source code files (excludes none by default) |
 | `MIN_WORDS`  | Minimum number of words in the comment to become an issue (defaults to `3`) |
