@@ -16,7 +16,8 @@ import (
 const (
 	defaultMinWords      = 3
 	defaultMinChars      = 30
-	defaultLimit         = 0
+	defaultAddLimit      = 0
+	defaultCloseLimit    = 0
 	defaultIssuesPerPage = 100
 	contextLinesUp       = 3
 	contextLinesDown     = 7
@@ -32,18 +33,19 @@ func sourceRoot(root string) string {
 }
 
 type env struct {
-	root      string
-	owner     string
-	repo      string
-	label     string
-	token     string
-	sha       string
-	includeRE string
-	excludeRE string
-	minWords  int
-	minChars  int
-	limit     int
-	dryRun    bool
+	root       string
+	owner      string
+	repo       string
+	label      string
+	token      string
+	sha        string
+	includeRE  string
+	excludeRE  string
+	minWords   int
+	minChars   int
+	addLimit   int
+	closeLimit int
+	dryRun     bool
 }
 
 type service struct {
@@ -80,9 +82,14 @@ func environment() *env {
 		e.minChars = defaultMinChars
 	}
 
-	e.limit, err = strconv.Atoi(os.Getenv("INPUT_LIMIT"))
+	e.addLimit, err = strconv.Atoi(os.Getenv("INPUT_ADD_LIMIT"))
 	if err != nil {
-		e.limit = defaultLimit
+		e.addLimit = defaultAddLimit
+	}
+
+	e.closeLimit, err = strconv.Atoi(os.Getenv("INPUT_CLOSE_LIMIT"))
+	if err != nil {
+		e.closeLimit = defaultCloseLimit
 	}
 
 	return e
@@ -169,10 +176,52 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			}
 
 			count++
-			if s.env.limit > 0 && count >= s.env.limit {
-				log.Printf("Exceeded limit of issues to create. limit=%v", s.env.limit)
+			if s.env.addLimit > 0 && count >= s.env.addLimit {
+				log.Printf("Exceeded limit of issues to create. limit=%v", s.env.addLimit)
 				break
 			}
+		}
+	}
+
+	log.Printf("Created new issues. count=%v", count)
+
+	return nil
+}
+
+func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
+	count := 0
+	commentsMap := make(map[string]*tdglib.ToDoComment)
+
+	for _, c := range comments {
+		commentsMap[c.Title] = c
+	}
+
+	for _, i := range issueMap {
+		if _, ok := commentsMap[i.GetTitle()]; ok {
+			continue
+		}
+
+		log.Printf("About to close an issue. issue=%v title=%v", i.GetID(), i.GetTitle())
+
+		if s.env.dryRun {
+			log.Printf("Dry run mode")
+			continue
+		}
+
+		closed := "closed"
+		req := &github.IssueRequest{
+			State: &closed,
+		}
+		_, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, i.GetNumber(), req)
+
+		if err != nil {
+			return err
+		}
+
+		count++
+		if s.env.closeLimit > 0 && count >= s.env.closeLimit {
+			log.Printf("Exceeded limit of issues to close. limit=%v", s.env.closeLimit)
+			break
 		}
 	}
 
@@ -229,6 +278,11 @@ func main() {
 	}
 
 	err = svc.openNewIssues(issueMap, comments)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = svc.closeMissingIssues(issueMap, comments)
 	if err != nil {
 		log.Panic(err)
 	}
