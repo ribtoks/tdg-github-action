@@ -118,6 +118,8 @@ func (e *env) debugPrint() {
 	log.Printf("Sha: %v", e.sha)
 	log.Printf("Root: %v", e.root)
 	log.Printf("Label: %v", e.label)
+	log.Printf("Column ID: %v", e.projectColumnID)
+	log.Printf("Extended labels: %v", e.extendedLabels)
 	log.Printf("Min words: %v", e.minWords)
 	log.Printf("Min chars: %v", e.minChars)
 	log.Printf("Add limit: %v", e.addLimit)
@@ -217,11 +219,14 @@ func (s *service) createProjectCard(issue *github.Issue) {
 		ContentType: "Issue",
 		ContentID:   issue.GetID(),
 	}
-	_, _, err := s.client.Projects.CreateProjectCard(s.ctx, s.env.projectColumnID, opts)
+	card, _, err := s.client.Projects.CreateProjectCard(s.ctx, s.env.projectColumnID, opts)
 
 	if err != nil {
 		log.Printf("Failed to create a project card. err=%v", err)
+		return
 	}
+
+	log.Printf("Created a project card. issue=%v card=%v", issue.GetID(), card.GetID())
 }
 
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
@@ -259,6 +264,8 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			if err != nil {
 				return err
 			}
+
+			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.GetID())
 
 			if s.env.projectColumnID != -1 {
 				s.createProjectCard(issue)
@@ -306,6 +313,8 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		if err != nil {
 			return err
 		}
+
+		log.Printf("Closed an issue. issue=%v", i.GetID())
 
 		count++
 		if s.env.closeLimit > 0 && count >= s.env.closeLimit {
