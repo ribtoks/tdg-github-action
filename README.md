@@ -5,7 +5,7 @@
 
 GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Optionally issues are added to a Project Column that you specify. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
 
-When a new todo comment is added, a new issue is created. When this comment is removed, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
+When a new todo comment is added, a new issue is created. When this comment is removed on the branch it was added, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
 ## Screenshot
 
@@ -47,6 +47,7 @@ jobs:
 | `ROOT`  | Source code root (defaults to `.`) |
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
 | `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
+| `CLOSE_ON_SAME_BRANCH`  | Close issues only if they are missing from the same branch as they were created on (by default) |
 | `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (none by default) |
 | `INCLUDE_PATTERN`  | Regexp to include source code files (includes all by default) |
 | `EXCLUDE_PATTERN`  | Regexp to exclude source code files (excludes none by default) |
@@ -95,6 +96,8 @@ jobs:
 > **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
 
 In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu.
+
+In case you are disabling `EXTENDED_LABELS`, then `CLOSE_ON_SAME_BRANCH` logic will be broken since there will be no knowledge on which branch the issue was created (for new issues).
 
 ### TODO comments
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/google/go-github/v31/github"
 	"github.com/ribtoks/tdg/pkg/tdglib"
@@ -25,6 +26,8 @@ const (
 	ghRoot               = "/github/workspace"
 	minEstimate          = 0.01
 	hourMinutes          = 60
+	labelBranchPrefix    = "branch: "
+	labelTypePrefix      = "type: "
 )
 
 func sourceRoot(root string) string {
@@ -36,51 +39,59 @@ func sourceRoot(root string) string {
 }
 
 type env struct {
-	root            string
-	owner           string
-	repo            string
-	label           string
-	token           string
-	sha             string
-	ref             string
-	branch          string
-	includeRE       string
-	excludeRE       string
-	projectColumnID int64
-	minWords        int
-	minChars        int
-	addLimit        int
-	closeLimit      int
-	extendedLabels  bool
-	dryRun          bool
+	root              string
+	owner             string
+	repo              string
+	label             string
+	token             string
+	sha               string
+	ref               string
+	branch            string
+	includeRE         string
+	excludeRE         string
+	projectColumnID   int64
+	minWords          int
+	minChars          int
+	addLimit          int
+	closeLimit        int
+	closeOnSameBranch bool
+	extendedLabels    bool
+	dryRun            bool
 }
 
 type service struct {
 	ctx    context.Context
 	client *github.Client
 	env    *env
+	wg     sync.WaitGroup
 }
 
 func (e *env) sourceRoot() string {
 	return sourceRoot(e.root)
 }
 
-func environment() *env {
-	e := &env{}
-	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
-	e.owner, e.repo = r[0], r[1]
-	e.label = os.Getenv("INPUT_LABEL")
-	e.token = os.Getenv("INPUT_TOKEN")
-	e.sha = os.Getenv("INPUT_SHA")
-	e.ref = os.Getenv("INPUT_REF")
-	e.includeRE = os.Getenv("INPUT_INCLUDE_PATTERN")
-	e.excludeRE = os.Getenv("INPUT_EXCLUDE_PATTERN")
-	e.root = os.Getenv("INPUT_ROOT")
-	e.dryRun = len(os.Getenv("INPUT_DRY_RUN")) > 0
-	e.branch = branch(e.ref)
+func flagToBool(s string) bool {
+	s = strings.ToLower(s)
+	return s == "1" || s == "true" || s == "y" || s == "yes"
+}
 
-	el := os.Getenv("INPUT_EXTENDED_LABELS")
-	e.extendedLabels = el == "1" || el == "true" || el == "y" || el == "yes"
+func environment() *env {
+	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
+	ref := os.Getenv("INPUT_REF")
+	e := &env{
+		owner:          r[0],
+		repo:           r[1],
+		ref:            ref,
+		branch:         branch(ref),
+		label:          os.Getenv("INPUT_LABEL"),
+		token:          os.Getenv("INPUT_TOKEN"),
+		sha:            os.Getenv("INPUT_SHA"),
+		includeRE:      os.Getenv("INPUT_INCLUDE_PATTERN"),
+		excludeRE:      os.Getenv("INPUT_EXCLUDE_PATTERN"),
+		root:           os.Getenv("INPUT_ROOT"),
+		dryRun:         flagToBool(os.Getenv("INPUT_DRY_RUN")),
+		extendedLabels: flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
+	}
 
 	var err error
 
@@ -124,6 +135,8 @@ func (e *env) debugPrint() {
 	log.Printf("Min chars: %v", e.minChars)
 	log.Printf("Add limit: %v", e.addLimit)
 	log.Printf("Close limit: %v", e.closeLimit)
+	log.Printf("Close on same branch: %v", e.closeOnSameBranch)
+	log.Printf("Dry run: %v", e.dryRun)
 }
 
 func branch(ref string) string {
@@ -194,8 +207,8 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 func (s *service) labels(c *tdglib.ToDoComment) []string {
 	labels := []string{s.env.label}
 	if s.env.extendedLabels {
-		labels = append(labels, fmt.Sprintf("branch: %v", s.env.branch))
-		labels = append(labels, fmt.Sprintf("type: %v", strings.ToLower(c.Type)))
+		labels = append(labels, labelBranchPrefix+s.env.branch)
+		labels = append(labels, labelTypePrefix+strings.ToLower(c.Type))
 
 		if c.Estimate > minEstimate {
 			minutes := math.Round(c.Estimate * hourMinutes)
@@ -230,7 +243,8 @@ func (s *service) createProjectCard(issue *github.Issue) {
 	log.Printf("Created a project card. issue=%v card=%v", issue.GetID(), card.GetID())
 }
 
-func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
+func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
+	defer s.wg.Done()
 	count := 0
 
 	for _, c := range comments {
@@ -263,7 +277,8 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 
 			issue, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, req)
 			if err != nil {
-				return err
+				log.Printf("Error while creating an issue. err=%v", err)
+				continue
 			}
 
 			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.GetID())
@@ -281,13 +296,44 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 	}
 
 	log.Printf("Created new issues. count=%v", count)
-
-	return nil
 }
 
-func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) error {
+func (s *service) canCloseIssue(issue *github.Issue) bool {
+	if !s.env.closeOnSameBranch {
+		return true
+	}
+
+	opts := &github.ListOptions{}
+	labels, _, err := s.client.Issues.ListLabelsByIssue(s.ctx, s.env.owner, s.env.repo, issue.GetNumber(), opts)
+
+	if err != nil {
+		log.Printf("Error while listing labels. issue=%v err=%v", issue.GetID(), err)
+		return false
+	}
+
+	anyBranch := false
+
+	for _, l := range labels {
+		if strings.HasPrefix(labelBranchPrefix, l.GetName()) {
+			anyBranch = true
+			branch := strings.TrimPrefix(l.GetName(), labelBranchPrefix)
+
+			if branch == s.env.branch {
+				return true
+			}
+		}
+	}
+
+	// if the issues does not have a branch tag, assume we can close it
+	return !anyBranch
+}
+
+func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
+	defer s.wg.Done()
+
 	count := 0
 	commentsMap := make(map[string]*tdglib.ToDoComment)
+	closed := "closed"
 
 	for _, c := range comments {
 		commentsMap[c.Title] = c
@@ -305,14 +351,20 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 			continue
 		}
 
-		closed := "closed"
+		canClose := s.canCloseIssue(i)
+		if !canClose {
+			log.Printf("Cannot close the issue. issue=%v", i.GetID())
+			continue
+		}
+
 		req := &github.IssueRequest{
 			State: &closed,
 		}
 		_, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, i.GetNumber(), req)
 
 		if err != nil {
-			return err
+			log.Printf("Error while closing an issue. issue=%v err=%v", i.GetID(), err)
+			continue
 		}
 
 		log.Printf("Closed an issue. issue=%v", i.GetID())
@@ -324,7 +376,7 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		}
 	}
 
-	return nil
+	log.Printf("Closed issues. count=%v", count)
 }
 
 func main() {
@@ -378,17 +430,14 @@ func main() {
 		issueMap[i.GetTitle()] = i
 	}
 
-	// do NOT execute those operations in parallel to stay in GH request rate limits
-	err = svc.openNewIssues(issueMap, comments)
-	if err != nil {
-		log.Panic(err)
-	}
+	svc.wg.Add(1)
+	go svc.closeMissingIssues(issueMap, comments)
 
-	// do NOT execute those operations in parallel to stay in GH request rate limits
-	err = svc.closeMissingIssues(issueMap, comments)
-	if err != nil {
-		log.Panic(err)
-	}
+	svc.wg.Add(1)
+	go svc.openNewIssues(issueMap, comments)
+
+	log.Printf("Waiting for issues management to finish")
+	svc.wg.Wait()
 
 	fmt.Println(fmt.Sprintf(`::set-output name=scannedIssues::%s`, "1"))
 }
