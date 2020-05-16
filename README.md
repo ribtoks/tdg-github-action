@@ -102,6 +102,16 @@ jobs:
 
 Note escaped regex.
 
+If you want to only process TODO comments from master branch, modify the workflow `on` section like this:
+
+```yaml
+on:
+  # only for the master branch
+  push:
+    branches:
+    - master
+```
+
 ### TODO comments
 
 Comments are parsed using [tdg](https://github.com/ribtoks/tdg). Supported comments: `//`, `#`, `%`, `;`, `*`.
