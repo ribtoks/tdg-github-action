@@ -61,7 +61,7 @@ jobs:
 
 Flag values like `CLOSE_ON_SAME_BRANCH` or `DRY_RUN` use values `1`/`true`/`y` as ON switch.
 
-In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu.
+In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu. ID is the last part of the URL `https://github.com/owner/repo/projects/5#column-823438` (ID would be `823438`).
 
 In case you are disabling `EXTENDED_LABELS`, then `CLOSE_ON_SAME_BRANCH` logic will be broken since there will be no knowledge on which branch the issue was created (for new issues), effectively making it disabled.
 
