@@ -20,7 +20,7 @@ const (
 	defaultMinChars      = 30
 	defaultAddLimit      = 0
 	defaultCloseLimit    = 0
-	defaultIssuesPerPage = 100
+	defaultIssuesPerPage = 200
 	contextLinesUp       = 3
 	contextLinesDown     = 7
 	ghRoot               = "/github/workspace"
