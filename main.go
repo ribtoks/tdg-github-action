@@ -28,6 +28,7 @@ const (
 	hourMinutes          = 60
 	labelBranchPrefix    = "branch: "
 	labelTypePrefix      = "type: "
+	labelAreaPrefix      = "area: "
 )
 
 func sourceRoot(root string) string {
@@ -210,6 +211,10 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 	if s.env.extendedLabels {
 		labels = append(labels, labelBranchPrefix+s.env.branch)
 		labels = append(labels, labelTypePrefix+strings.ToLower(c.Type))
+
+		if len(c.Category) > 0 {
+			labels = append(labels, labelAreaPrefix+c.Category)
+		}
 
 		if c.Estimate > minEstimate {
 			minutes := math.Round(c.Estimate * hourMinutes)
