@@ -36,6 +36,8 @@ jobs:
 
 > **NOTE:** Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
 
+You can use this action together with [parent issue updater](https://github.com/ribtoks/parent-issue-update) in order to automatically keep track of child TODO items in parent issues. For that you need to use `issue=123` extension in the TODO comment - see example below.
+
 ### Inputs
 
 | Input                                             | Description                                        |
@@ -122,3 +124,5 @@ Example of the comment (everything but the first line is optional):
     // category=SomeCategory issue=123 estimate=30m author=alias
     // This is a multiline description of the issue
     // that will be in the "Body" property of the comment
+
+Note that second line has some optional "extensions" added as metadata to the issue by [tdg](https://github.com/ribtoks/tdg). Some are turned into labels and also used by [parent issue updater](https://github.com/ribtoks/parent-issue-update).
