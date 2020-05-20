@@ -13,12 +13,12 @@ When a new todo comment is added, a new issue is created. When this comment is r
 
 ## Usage
 
-Create a workflow file in your .github/workflows/ directory with the following contents:
+Create a workflow file in your `.github/workflows/` directory with the following contents:
 
 ### Basic example
 
 ```yaml
-name: TDG workflow
+name: TODO workflow
 on: [push, pull_request]
 jobs:
   build:
