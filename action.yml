@@ -51,8 +51,6 @@ inputs:
     description: "ID of the project column to move newly created issues to"
     default: "-1"
 
-outputs:
-
 runs:
   using: "docker"
   image: "Dockerfile"
