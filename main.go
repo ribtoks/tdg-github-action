@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -183,6 +184,15 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 	return allIssues, nil
 }
 
+func escapePath(path string) string {
+	parts := strings.Split(path, "/")
+	for i := range parts {
+		parts[i] = url.PathEscape(parts[i])
+	}
+
+	return strings.Join(parts, "/")
+}
+
 func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 	start := c.Line - contextLinesUp
 	if start < 0 {
@@ -201,9 +211,11 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 		filepath = fmt.Sprintf("%v/%v", root, c.File)
 	}
 
+	safeFilepath := escapePath(filepath)
+
 	// https://github.com/{repo}/blob/{sha}/{file}#L{startLines}-L{endLine}
 	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v",
-		s.env.owner, s.env.repo, s.env.sha, filepath, start, end)
+		s.env.owner, s.env.repo, s.env.sha, safeFilepath, start, end)
 }
 
 func (s *service) labels(c *tdglib.ToDoComment) []string {
