@@ -198,6 +198,7 @@ func (td *ToDoGenerator) addComment(c *ToDoComment) {
 	defer td.commentsWG.Done()
 
 	h := md5.New()
+	io.WriteString(h, c.File)
 	io.WriteString(h, c.Title)
 	io.WriteString(h, c.Body)
 	s := hex.EncodeToString(h.Sum(nil))

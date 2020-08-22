@@ -9,6 +9,8 @@ github.com/ribtoks/tdg v0.0.0-20200515192033-b92d0e0bf73e h1:Eo6IRRZyYiN9qKx4RWN
 github.com/ribtoks/tdg v0.0.0-20200515192033-b92d0e0bf73e/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
 github.com/ribtoks/tdg v0.0.0-20200516090954-4c148d8c94b4 h1:o0/WFBonGuTIwD13hqsmIPfU2V/Zv3VCJ+TAwggZceI=
 github.com/ribtoks/tdg v0.0.0-20200516090954-4c148d8c94b4/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
+github.com/ribtoks/tdg v0.0.0-20200822055328-ab56d56aa9f9 h1:Nop/sYgUM1TtnIOrATLXshRikIFH0r+JkvAB9kOVzS4=
+github.com/ribtoks/tdg v0.0.0-20200822055328-ab56d56aa9f9/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26 h1:E0lEWrifmR0ACbGf5PLji1XbW6rtIXLHCXO/YOqi0AE=
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26/go.mod h1:TQpdgg7I9+PFIkatlx/dnZyZb4iZyCUx1HJj4rXi3+E=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
