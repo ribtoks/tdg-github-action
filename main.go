@@ -389,7 +389,7 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		}
 
 		if s.env.commentIssue {
-			s.commentIssue(fmt.Sprintf("Closed in commit %v", s.env.ref), i)
+			s.commentIssue(fmt.Sprintf("Closed in commit %v", s.env.sha), i)
 		}
 
 		req := &github.IssueRequest{
