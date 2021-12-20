@@ -382,6 +382,11 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 			continue
 		}
 
+		if i.GetState() == closed {
+			log.Printf("Issue is already closed. issue=%v", i.GetNumber())
+			continue
+		}
+
 		canClose := s.canCloseIssue(i)
 		if !canClose {
 			log.Printf("Cannot close the issue. issue=%v", i.GetID())
