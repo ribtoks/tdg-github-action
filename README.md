@@ -40,8 +40,8 @@ You can use this action together with [parent issue updater](https://github.com/
 
 ### Inputs
 
-| Input                                             | Description                                        |
-|------------------------------------------------------|-----------------------------------------------|
+| Input | Description |
+|---|---|
 | `REPO`  | Repository name in the format of `owner/repo` (required)   |
 | `TOKEN`  | Github token used to create or close issues (required)  |
 | `REF`  | Git ref: branch or pull request (required)|
@@ -58,6 +58,7 @@ You can use this action together with [parent issue updater](https://github.com/
 | `DRY_RUN`  | Do not open or close real issues (used for debugging) |
 | `ADD_LIMIT`  | Upper cap on the number of issues to create (defaults to `0` - unlimited) |
 | `CLOSE_LIMIT`  | Upper cap on the number of issues to close (defaults to `0` - unlimited) |
+| `COMMENT_ON_ISSUES` | Leave a comment in which commit the issue was closed (defaults to `0` - do not comment) |
 
 > **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
 

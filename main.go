@@ -59,6 +59,7 @@ type env struct {
 	closeOnSameBranch bool
 	extendedLabels    bool
 	dryRun            bool
+	commentIssue      bool
 }
 
 type service struct {
@@ -94,6 +95,7 @@ func environment() *env {
 		dryRun:            flagToBool(os.Getenv("INPUT_DRY_RUN")),
 		extendedLabels:    flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
 		closeOnSameBranch: flagToBool(os.Getenv("INPUT_CLOSE_ON_SAME_BRANCH")),
+		commentIssue:      flagToBool(os.Getenv("INPUT_COMMENT_ON_ISSUES")),
 	}
 
 	var err error
@@ -344,6 +346,19 @@ func (s *service) canCloseIssue(issue *github.Issue) bool {
 	return !anyBranch
 }
 
+func (s *service) commentIssue(body string, i *github.Issue) {
+	comment := &github.IssueComment{
+		Body: &body,
+	}
+	_, _, err := s.client.Issues.CreateComment(s.ctx, s.env.owner, s.env.repo, i.GetNumber(), comment)
+	if err != nil {
+		log.Printf("Error while adding a comment. issue=%v err=%v", i.ID, err)
+		return
+	}
+
+	log.Printf("Added a comment to the issue. issue=%v", i.ID)
+}
+
 func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
 
@@ -371,6 +386,10 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		if !canClose {
 			log.Printf("Cannot close the issue. issue=%v", i.GetID())
 			continue
+		}
+
+		if s.env.commentIssue {
+			s.commentIssue(fmt.Sprintf("Closed in commit %v", s.env.ref), i)
 		}
 
 		req := &github.IssueRequest{
