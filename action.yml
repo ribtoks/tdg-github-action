@@ -50,7 +50,9 @@ inputs:
   PROJECT_COLUMN_ID:
     description: "ID of the project column to move newly created issues to"
     default: "-1"
-
+  COMMENT_ON_ISSUES:
+    description: "Create commit reference in the comments before closing the issue"
+    default: "0"
 runs:
   using: "docker"
   image: "Dockerfile"
