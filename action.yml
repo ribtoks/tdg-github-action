@@ -4,10 +4,9 @@ author: "Taras Kushnir"
 inputs:
   REPO:
     description: "Repository"
-    default: ""
+    default: "${{ github.repository }}"
   TOKEN:
     description: "Github token"
-    default: ""
   INCLUDE_PATTERN:
     description: "Regexp for source files to include"
     default: ""
@@ -40,10 +39,10 @@ inputs:
     default: "todo comment"
   SHA:
     description: "SHA value of the commit"
-    default: ""
+    default: "${{ github.sha }}"
   REF:
     description: "Github Ref that triggered the workflow (branch or tag)"
-    default: ""
+    default: "${{ github.ref }}"
   EXTENDED_LABELS:
     description: "Create additional labels to mark branch, issue type etc."
     default: "1"
@@ -53,9 +52,12 @@ inputs:
   COMMENT_ON_ISSUES:
     description: "Create commit reference in the comments before closing the issue"
     default: "0"
+  ACTION_ASSET_URL:
+    description: 'Action binary to download'
+    default: 'https://github.com/ribtoks/tdg-github-action/releases/latest/download/action.tar.gz'
 runs:
-  using: "docker"
-  image: "Dockerfile"
+  using: "node12"
+  main: "main.js"
 
 branding:
   icon: "check-square"

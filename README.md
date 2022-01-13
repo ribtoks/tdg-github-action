@@ -29,9 +29,6 @@ jobs:
       uses: ribtoks/tdg-github-action@master
       with:
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO: ${{ github.repository }}
-        SHA: ${{ github.sha }}
-        REF: ${{ github.ref }}
 ```
 
 > **NOTE:** Please note that currently GitHub has 5000 requests per hour limit so if you are running it on a fresh repository and you have lots of todos in comments, you may hit this limit.
@@ -42,10 +39,10 @@ You can use this action together with [parent issue updater](https://github.com/
 
 | Input | Description |
 |---|---|
-| `REPO`  | Repository name in the format of `owner/repo` (required)   |
-| `TOKEN`  | Github token used to create or close issues (required)  |
-| `REF`  | Git ref: branch or pull request (required)|
-| `SHA`  | SHA-1 value of the commit (required) |
+| `REPO`  | Repository name in the format of `owner/repo` (defaults to current repo)   |
+| `TOKEN`  | Github token used to create or close issues |
+| `REF`  | Git ref: branch or pull request (defaults to `${{ github.ref }}`)|
+| `SHA`  | SHA-1 value of the commit (defaults to `${{ github.sha }}`) |
 | `ROOT`  | Source code root (defaults to `.`) |
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
 | `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
@@ -59,6 +56,7 @@ You can use this action together with [parent issue updater](https://github.com/
 | `ADD_LIMIT`  | Upper cap on the number of issues to create (defaults to `0` - unlimited) |
 | `CLOSE_LIMIT`  | Upper cap on the number of issues to close (defaults to `0` - unlimited) |
 | `COMMENT_ON_ISSUES` | Leave a comment in which commit the issue was closed (defaults to `0` - do not comment) |
+| `ACTION_ASSET_URL` | Action binary to download (defaults to latest release) |
 
 > **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
 

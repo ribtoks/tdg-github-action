@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,7 +25,6 @@ const (
 	defaultIssuesPerPage = 200
 	contextLinesUp       = 3
 	contextLinesDown     = 7
-	ghRoot               = "/github/workspace"
 	minEstimate          = 0.01
 	hourMinutes          = 60
 	labelBranchPrefix    = "branch: "
@@ -33,6 +33,8 @@ const (
 )
 
 func sourceRoot(root string) string {
+	ghRoot := os.Getenv("GITHUB_WORKSPACE")
+
 	if strings.HasPrefix(root, "/") {
 		return ghRoot + root
 	}
@@ -76,6 +78,22 @@ func (e *env) sourceRoot() string {
 func flagToBool(s string) bool {
 	s = strings.ToLower(s)
 	return s == "1" || s == "true" || s == "y" || s == "yes"
+}
+
+func unorderedEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	sort.Strings(a)
+	sort.Strings(b)
+
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func environment() *env {
@@ -220,6 +238,14 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 		s.env.owner, s.env.repo, s.env.sha, safeFilepath, start, end)
 }
 
+func (s *service) extractLabels(i *github.Issue) []string {
+	var labels []string
+	for _, label := range i.Labels {
+		labels = append(labels, *label.Name)
+	}
+	return labels
+}
+
 func (s *service) labels(c *tdglib.ToDoComment) []string {
 	labels := []string{s.env.label}
 	if s.env.extendedLabels {
@@ -263,59 +289,74 @@ func (s *service) createProjectCard(issue *github.Issue) {
 	log.Printf("Created a project card. issue=%v card=%v", issue.GetID(), card.GetID())
 }
 
-func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
+func (s *service) updateExistingIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
-	count := 0
+	createdCount := 0
+	updatedCount := 0
 
 	for _, c := range comments {
-		_, ok := issueMap[c.Title]
-		if !ok {
-			body := c.Body + "\n\n"
-			if c.Issue > 0 {
-				body += fmt.Sprintf("Parent issue: #%v\n", c.Issue)
+		existingIssue, ok := issueMap[c.Title]
+
+		body := c.Body + "\n\n"
+		if c.Issue > 0 {
+			body += fmt.Sprintf("Parent issue: #%v\n", c.Issue)
+		}
+
+		if len(c.Author) > 0 {
+			body += fmt.Sprintf("Author: @%s\n", c.Author)
+		}
+
+		body += fmt.Sprintf("Line: %v\n%s", c.Line, s.createFileLink(c))
+
+		log.Printf("About to create an issue. title=%v body=%v", c.Title, body)
+
+		if s.env.dryRun {
+			log.Printf("Dry run mode.")
+			continue
+		}
+
+		labels := s.labels(c)
+		req := &github.IssueRequest{
+			Title:  &c.Title,
+			Body:   &body,
+			Labels: &labels,
+		}
+
+		if ok {
+			// issue already exists, update it if the body or labels have changed
+			if (body != *existingIssue.Body) || (!unorderedEqual(labels, s.extractLabels(existingIssue))) {
+				issue, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, *existingIssue.Number, req)
+				if err != nil {
+					log.Printf("Error updating an issue. err=%v", err)
+					continue
+				}
+
+				updatedCount++
+				log.Printf("Updated an issue. title=%v issue=%v", c.Title, issue.Number)
 			}
-
-			if len(c.Author) > 0 {
-				body += fmt.Sprintf("Author: @%s\n", c.Author)
-			}
-
-			body += fmt.Sprintf("Line: %v\n%s", c.Line, s.createFileLink(c))
-
-			log.Printf("About to create an issue. title=%v body=%v", c.Title, body)
-
-			if s.env.dryRun {
-				log.Printf("Dry run mode.")
-				continue
-			}
-
-			labels := s.labels(c)
-			req := &github.IssueRequest{
-				Title:  &c.Title,
-				Body:   &body,
-				Labels: &labels,
-			}
-
+		} else {
+			// otherwise create a new issue
 			issue, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, req)
 			if err != nil {
 				log.Printf("Error while creating an issue. err=%v", err)
 				continue
 			}
 
-			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.GetID())
+			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.Number)
 
 			if s.env.projectColumnID != -1 {
 				s.createProjectCard(issue)
 			}
 
-			count++
-			if s.env.addLimit > 0 && count >= s.env.addLimit {
+			createdCount++
+			if s.env.addLimit > 0 && createdCount >= s.env.addLimit {
 				log.Printf("Exceeded limit of issues to create. limit=%v", s.env.addLimit)
 				break
 			}
 		}
 	}
 
-	log.Printf("Created new issues. count=%v", count)
+	log.Printf("Issues synced: created=%v, updated=%v", createdCount, updatedCount)
 }
 
 func (s *service) canCloseIssue(issue *github.Issue) bool {
@@ -474,7 +515,7 @@ func main() {
 	go svc.closeMissingIssues(issueMap, comments)
 
 	svc.wg.Add(1)
-	go svc.openNewIssues(issueMap, comments)
+	go svc.updateExistingIssues(issueMap, comments)
 
 	log.Printf("Waiting for issues management to finish")
 	svc.wg.Wait()

@@ -17,13 +17,9 @@ jobs:
       - uses: actions/checkout@master
       - name: Self test
         id: selftest
-
         uses: ribtoks/tdg-github-action@master
         with:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
-          REF: ${{ github.ref }}
           DRY_RUN: 1
           EXCLUDE_PATTERN: "\\.*/vendor/"
       - name: Check outputs
