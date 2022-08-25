@@ -191,6 +191,8 @@ github.com/ribtoks/tdg v0.0.0-20200516090954-4c148d8c94b4 h1:o0/WFBonGuTIwD13hqs
 github.com/ribtoks/tdg v0.0.0-20200516090954-4c148d8c94b4/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
 github.com/ribtoks/tdg v0.0.0-20200822055328-ab56d56aa9f9 h1:Nop/sYgUM1TtnIOrATLXshRikIFH0r+JkvAB9kOVzS4=
 github.com/ribtoks/tdg v0.0.0-20200822055328-ab56d56aa9f9/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
+github.com/ribtoks/tdg v0.0.0-20201005053551-a9b09d3f6704 h1:Q/DINfqy/tBThdbQkYPKli5dNdb7Zzg4egbn6Li65is=
+github.com/ribtoks/tdg v0.0.0-20201005053551-a9b09d3f6704/go.mod h1:W4IVBHOFio8DXkpgfyz7qtl08xymauXmHD3TApFLW1o=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
