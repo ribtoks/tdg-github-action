@@ -12,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/google/go-github/v31/github"
-	"github.com/ribtoks/tdg/pkg/tdglib"
+	"gitlab.com/ribtoks/tdg/pkg/tdglib"
 	"golang.org/x/oauth2"
 )
 
