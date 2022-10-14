@@ -23,7 +23,7 @@ golang.org/x/crypto/openpgp/s2k
 # golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
-# golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
+# golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
