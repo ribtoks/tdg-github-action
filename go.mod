@@ -7,5 +7,5 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/go-github/v48 v48.2.0
 	gitlab.com/ribtoks/tdg v0.0.0-20220811051936-9a3d5994ec91
-	golang.org/x/oauth2 v0.1.0
+	golang.org/x/oauth2 v0.4.0
 )
