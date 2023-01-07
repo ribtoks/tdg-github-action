@@ -1,20 +1,24 @@
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
 # github.com/golang/protobuf v1.5.2
+## explicit; go 1.9
 github.com/golang/protobuf/proto
 # github.com/google/go-github/v31 v31.0.0
-## explicit
+## explicit; go 1.13
 github.com/google/go-github/v31/github
 # github.com/google/go-github/v48 v48.2.0
-## explicit
+## explicit; go 1.17
 # github.com/google/go-querystring v1.1.0
+## explicit; go 1.10
 github.com/google/go-querystring/query
 # github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
+## explicit
 github.com/zieckey/goini
 # gitlab.com/ribtoks/tdg v0.0.0-20220811051936-9a3d5994ec91
-## explicit
+## explicit; go 1.18
 gitlab.com/ribtoks/tdg/pkg/tdglib
-# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+# golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+## explicit; go 1.17
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp
 golang.org/x/crypto/openpgp/armor
@@ -23,13 +27,15 @@ golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
 # golang.org/x/net v0.1.0
+## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 # golang.org/x/oauth2 v0.1.0
-## explicit
+## explicit; go 1.17
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # google.golang.org/appengine v1.6.7
+## explicit; go 1.11
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
@@ -38,6 +44,7 @@ google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
 # google.golang.org/protobuf v1.28.0
+## explicit; go 1.11
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
