@@ -2,6 +2,10 @@
 
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
 
+build:
+	export GOFLAGS="-mod=vendor"
+	go build
+
 test:
 	go test ./...
 

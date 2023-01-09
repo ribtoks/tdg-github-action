@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v49/github"
 	"gitlab.com/ribtoks/tdg/pkg/tdglib"
 	"golang.org/x/oauth2"
 )
