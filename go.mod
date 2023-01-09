@@ -6,7 +6,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/google/go-github/v49 v49.0.0
 	github.com/kr/pretty v0.1.0 // indirect
-	gitlab.com/ribtoks/tdg v0.0.0-20220811051936-9a3d5994ec91
+	gitlab.com/ribtoks/tdg v0.0.1
 	golang.org/x/oauth2 v0.4.0
 	google.golang.org/protobuf v1.28.1 // indirect
 )

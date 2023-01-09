@@ -59,6 +59,7 @@ You can use this action together with [parent issue updater](https://github.com/
 | `ADD_LIMIT`  | Upper cap on the number of issues to create (defaults to `0` - unlimited) |
 | `CLOSE_LIMIT`  | Upper cap on the number of issues to close (defaults to `0` - unlimited) |
 | `COMMENT_ON_ISSUES` | Leave a comment in which commit the issue was closed (defaults to `0` - do not comment) |
+| `CONCURRENCY` | How many files to process in parallel (defaults to `128`) |
 
 > **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
 

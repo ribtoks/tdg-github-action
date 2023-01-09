@@ -22,6 +22,7 @@ const (
 	defaultAddLimit      = 0
 	defaultCloseLimit    = 0
 	defaultIssuesPerPage = 200
+	defaultConcurrency   = 128
 	contextLinesUp       = 3
 	contextLinesDown     = 7
 	ghRoot               = "/github/workspace"
@@ -56,6 +57,7 @@ type env struct {
 	minChars          int
 	addLimit          int
 	closeLimit        int
+	concurrency       int
 	closeOnSameBranch bool
 	extendedLabels    bool
 	dryRun            bool
@@ -118,6 +120,11 @@ func environment() *env {
 	e.closeLimit, err = strconv.Atoi(os.Getenv("INPUT_CLOSE_LIMIT"))
 	if err != nil {
 		e.closeLimit = defaultCloseLimit
+	}
+
+	e.concurrency, err = strconv.Atoi(os.Getenv("INPUT_CONCURRENCY"))
+	if err != nil {
+		e.concurrency = defaultConcurrency
 	}
 
 	e.projectColumnID, err = strconv.ParseInt(os.Getenv("INPUT_PROJECT_COLUMN_ID"), 10, 64)
@@ -456,7 +463,8 @@ func main() {
 		includePatterns,
 		excludePatterns,
 		env.minWords,
-		env.minChars)
+		env.minChars,
+		env.concurrency)
 
 	comments, err := td.Generate()
 	if err != nil {

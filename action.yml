@@ -32,6 +32,9 @@ inputs:
   ADD_LIMIT:
     description: "Limit number of issues to create during workflow"
     default: ""
+  CONCURRENCY:
+    description: "Amount of files to process in parallel"
+    default: "128"
   CLOSE_LIMIT:
     description: "Limit number of issues to close during workflow"
     default: ""

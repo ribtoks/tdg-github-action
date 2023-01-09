@@ -59,10 +59,11 @@ type ToDoGenerator struct {
 	minChars   int
 	addedMap   map[string]bool
 	commentMux sync.Mutex
+	semaphore  chan bool
 }
 
 // NewToDoGenerator creates new generator for a source root
-func NewToDoGenerator(root string, include []string, exclude []string, minWords, minChars int) *ToDoGenerator {
+func NewToDoGenerator(root string, include []string, exclude []string, minWords, minChars, concurrency int) *ToDoGenerator {
 	log.Printf("Using source code root %v", root)
 	log.Printf("Using %v include filters", include)
 	ifilters := make([]*regexp.Regexp, 0, len(include))
@@ -84,13 +85,14 @@ func NewToDoGenerator(root string, include []string, exclude []string, minWords,
 	}
 
 	return &ToDoGenerator{
-		root:     absolutePath,
-		include:  ifilters,
-		exclude:  efilters,
-		minWords: minWords,
-		minChars: minChars,
-		comments: make([]*ToDoComment, 0),
-		addedMap: make(map[string]bool),
+		root:      absolutePath,
+		include:   ifilters,
+		exclude:   efilters,
+		minWords:  minWords,
+		minChars:  minChars,
+		comments:  make([]*ToDoComment, 0),
+		addedMap:  make(map[string]bool),
+		semaphore: make(chan bool, concurrency),
 	}
 }
 
@@ -164,6 +166,7 @@ func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 
 		matchesCount++
 		td.commentsWG.Add(1)
+		td.semaphore <- true
 		go td.parseFile(path)
 
 		return nil
@@ -175,6 +178,9 @@ func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 
 	log.Printf("Scanned files: %v", totalFiles)
 	log.Printf("Matched files: %v", matchesCount)
+	for i := 0; i < cap(td.semaphore); i++ {
+		td.semaphore <- true
+	}
 	td.commentsWG.Wait()
 	log.Printf("Found comments: %v", len(td.comments))
 
@@ -427,6 +433,7 @@ func (td *ToDoGenerator) accountComment(path string, lineNumber int, ctype, auth
 
 func (td *ToDoGenerator) parseFile(path string) {
 	defer td.commentsWG.Done()
+	defer func() { <-td.semaphore }()
 	f, err := os.Open(path)
 	if err != nil {
 		log.Print(err)
