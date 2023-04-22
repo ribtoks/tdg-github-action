@@ -8,6 +8,6 @@ require (
 	github.com/google/go-github/v50 v50.2.0
 	github.com/kr/pretty v0.1.0 // indirect
 	gitlab.com/ribtoks/tdg v0.0.1
-	golang.org/x/oauth2 v0.6.0
+	golang.org/x/oauth2 v0.7.0
 	google.golang.org/protobuf v1.28.1 // indirect
 )
