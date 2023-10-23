@@ -221,7 +221,7 @@ func (td *ToDoGenerator) addComment(c *ToDoComment) {
 		td.addedMap[s] = true
 		td.comments = append(td.comments, c)
 	} else {
-		log.Printf("Ignoring comment in %v:%v", c.File, c.Line)
+		log.Printf("Ignoring too small comment in %v:%v", c.File, c.Line)
 	}
 }
 
