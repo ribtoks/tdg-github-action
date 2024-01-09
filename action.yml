@@ -56,6 +56,9 @@ inputs:
   COMMENT_ON_ISSUES:
     description: "Create commit reference in the comments before closing the issue"
     default: "0"
+  ASSIGN_FROM_BLAME:
+    description: "Assign issue to the author of the comment via git blame"
+    default: "0"
 runs:
   using: "docker"
   image: "Dockerfile"

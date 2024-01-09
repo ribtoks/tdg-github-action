@@ -5,13 +5,13 @@ COPY . /app
 
 ENV GOFLAGS="-mod=vendor"
 
-# Statically compile our app for use in a distroless container
+# Statically compile our app for use in the final container
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -v -o app .
 
-# A distroless container image with some basics like SSL certificates
-# https://github.com/GoogleContainerTools/distroless
-FROM gcr.io/distroless/static
+FROM alpine:3.14
 
 COPY --from=builder /app/app /app
+
+RUN apk update && apk --no-cache add git
 
 ENTRYPOINT ["/app"]

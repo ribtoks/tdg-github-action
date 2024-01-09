@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/url"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -62,6 +63,7 @@ type env struct {
 	extendedLabels    bool
 	dryRun            bool
 	commentIssue      bool
+	assignFromBlame   bool
 }
 
 type service struct {
@@ -98,6 +100,7 @@ func environment() *env {
 		extendedLabels:    flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
 		closeOnSameBranch: flagToBool(os.Getenv("INPUT_CLOSE_ON_SAME_BRANCH")),
 		commentIssue:      flagToBool(os.Getenv("INPUT_COMMENT_ON_ISSUES")),
+		assignFromBlame:   flagToBool(os.Getenv("INPUT_ASSIGN_FROM_BLAME")),
 	}
 
 	var err error
@@ -462,9 +465,25 @@ func main() {
 	td := tdglib.NewToDoGenerator(env.sourceRoot(),
 		includePatterns,
 		excludePatterns,
+		env.assignFromBlame,
 		env.minWords,
 		env.minChars,
 		env.concurrency)
+
+	if env.assignFromBlame {
+		command := "git"
+		args := []string{"config", "--global", "--add", "safe.directory", env.sourceRoot()}
+
+		cmd := exec.Command(command, args...)
+		out, err := cmd.Output()
+		if out != nil {
+			fmt.Println(out)
+		}
+		if err != nil {
+			fmt.Printf("Error running git command: %v\n", err)
+			return
+		}
+	}
 
 	comments, err := td.Generate()
 	if err != nil {
