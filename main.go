@@ -299,10 +299,22 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			}
 
 			labels := s.labels(c)
+			var assignees []string
+			if s.env.assignFromBlame {
+				if len(c.CommitHash) > 0 {
+					commit, _, err := s.client.Git.GetCommit(s.ctx, s.env.owner, s.env.repo, c.CommitHash)
+					if err != nil {
+						log.Printf("Error while getting commit from commit hash. err=%v", err)
+					} else {
+						assignees = append(assignees, *commit.Author.Login)
+					}
+				}
+			}
 			req := &github.IssueRequest{
-				Title:  &c.Title,
-				Body:   &body,
-				Labels: &labels,
+				Title:     &c.Title,
+				Body:      &body,
+				Labels:    &labels,
+				Assignees: &assignees,
 			}
 
 			issue, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, req)
