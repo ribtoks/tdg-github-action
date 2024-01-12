@@ -287,6 +287,8 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 
 			if len(c.Author) > 0 {
 				body += fmt.Sprintf("Author: @%s\n", c.Author)
+			} else if len(c.CommitterEmail) > 0 {
+				body += fmt.Sprintf("Author: %s\n", c.CommitterEmail)
 			}
 
 			body += fmt.Sprintf("Line: %v\n%s", c.Line, s.createFileLink(c))
@@ -302,7 +304,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 			var assignees []string
 			if s.env.assignFromBlame {
 				if len(c.CommitHash) > 0 {
-					commit, _, err := s.client.Git.GetCommit(s.ctx, s.env.owner, s.env.repo, c.CommitHash)
+					commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, c.CommitHash, &github.ListOptions{})
 					if err != nil {
 						log.Printf("Error while getting commit from commit hash. err=%v", err)
 					} else {
