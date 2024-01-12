@@ -462,6 +462,7 @@ func main() {
 	td := tdglib.NewToDoGenerator(env.sourceRoot(),
 		includePatterns,
 		excludePatterns,
+		false /*blame*/,
 		env.minWords,
 		env.minChars,
 		env.concurrency)
