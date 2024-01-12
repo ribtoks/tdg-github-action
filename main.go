@@ -483,8 +483,14 @@ func main() {
 		env.concurrency)
 
 	if env.assignFromBlame {
+		root := env.sourceRoot()
+		for strings.HasSuffix(root, "/.") || strings.HasSuffix(root, "/") {
+			root = strings.TrimSuffix(root, "/.")
+			root = strings.TrimSuffix(root, "/")
+		}
+
 		command := "git"
-		args := []string{"config", "--global", "--add", "safe.directory", env.sourceRoot()}
+		args := []string{"config", "--global", "--add", "safe.directory", root}
 
 		cmd := exec.Command(command, args...)
 		out, err := cmd.Output()
