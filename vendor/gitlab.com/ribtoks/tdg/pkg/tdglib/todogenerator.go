@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -37,15 +38,22 @@ var (
 // ToDoComment a task that is parsed from TODO comment
 // estimate is in hours
 type ToDoComment struct {
-	Type     string  `json:"type"`
-	Title    string  `json:"title"`
-	Body     string  `json:"body"`
-	File     string  `json:"file"`
-	Line     int     `json:"line"`
-	Issue    int     `json:"issue,omitempty"`
-	Author   string  `json:"author,omitempty"`
-	Category string  `json:"category,omitempty"`
-	Estimate float64 `json:"estimate,omitempty"`
+	Type           string  `json:"type"`
+	Title          string  `json:"title"`
+	Body           string  `json:"body"`
+	File           string  `json:"file"`
+	Line           int     `json:"line"`
+	Issue          int     `json:"issue,omitempty"`
+	Author         string  `json:"author,omitempty"`
+	CommitHash     string  `json:"commitHash,omitempty"`
+	CommitterEmail string  `json:"committerEmail,omitempty"`
+	Category       string  `json:"category,omitempty"`
+	Estimate       float64 `json:"estimate,omitempty"`
+}
+
+type BlameDetails struct {
+	committerEmail string
+	commitHash     string
 }
 
 // ToDoGenerator is responsible for parsing code base to ToDoComments
@@ -59,11 +67,14 @@ type ToDoGenerator struct {
 	minChars   int
 	addedMap   map[string]bool
 	commentMux sync.Mutex
+	blameFlag  bool
+	blameMap   map[string]*BlameDetails
+	blameMux   sync.Mutex
 	semaphore  chan bool
 }
 
 // NewToDoGenerator creates new generator for a source root
-func NewToDoGenerator(root string, include []string, exclude []string, minWords, minChars, concurrency int) *ToDoGenerator {
+func NewToDoGenerator(root string, include []string, exclude []string, blameFlag bool, minWords, minChars, concurrency int) *ToDoGenerator {
 	log.Printf("Using source code root %v", root)
 	log.Printf("Using %v include filters", include)
 	ifilters := make([]*regexp.Regexp, 0, len(include))
@@ -93,6 +104,8 @@ func NewToDoGenerator(root string, include []string, exclude []string, minWords,
 		comments:  make([]*ToDoComment, 0),
 		addedMap:  make(map[string]bool),
 		semaphore: make(chan bool, concurrency),
+		blameFlag: blameFlag,
+		blameMap:  make(map[string]*BlameDetails),
 	}
 }
 
@@ -183,8 +196,21 @@ func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 	}
 	td.commentsWG.Wait()
 	log.Printf("Found comments: %v", len(td.comments))
+	td.backfillBlameDetails()
 
 	return td.comments, nil
+}
+
+func (td *ToDoGenerator) backfillBlameDetails() {
+	if td.blameFlag {
+		for _, c := range td.comments {
+			s := calculateCommentHash(c)
+			if blameDetails, ok := td.blameMap[s]; ok {
+				c.CommitterEmail = blameDetails.committerEmail
+				c.CommitHash = blameDetails.commitHash
+			}
+		}
+	}
 }
 
 func countTitleWords(s string) int {
@@ -200,14 +226,79 @@ func countTitleWords(s string) int {
 	return count
 }
 
-func (td *ToDoGenerator) addComment(c *ToDoComment) {
+func (td *ToDoGenerator) getBlameDetails(commentHash, filePath string, line int) {
 	defer td.commentsWG.Done()
 
+	absPath := filepath.Join(td.root, filePath)
+	command := "git"
+	lineNumber := strconv.Itoa(line)
+	args := []string{"blame", "-L", lineNumber + "," + lineNumber, "--porcelain", "--", absPath}
+	cmd := exec.Command(command, args...)
+	out, err := cmd.Output()
+
+	if err != nil {
+		if out != nil {
+			log.Println(out)
+		}
+		log.Printf("Unable to execute git blame for %s\nError: %s\n", filePath, err)
+		return
+	}
+
+	committerEmail := ""
+	commitHash := ""
+	lines := strings.Split(string(out), "\n")
+	// Process the first line to get the commit hash
+	if len(lines) > 0 {
+		firstLineParts := strings.Split(lines[0], " ")
+		if len(firstLineParts) > 0 {
+			commitHash = firstLineParts[0]
+		}
+	}
+	for _, line := range lines {
+		if strings.HasPrefix(line, "committer-mail") {
+			// Line would be of the form 'committer-mail <foo@bar.com>'
+			parts := strings.Split(line, " ")
+			if len(parts) > 1 {
+				committerEmail = parts[1]
+				// remove the < and >
+				committerEmail = strings.TrimPrefix(committerEmail, "<")
+				committerEmail = strings.TrimSuffix(committerEmail, ">")
+				break
+			}
+
+		}
+	}
+
+	if len(commitHash) == 0 {
+		log.Printf("Unable to get commit hash from blame output for %s", filePath)
+		return
+	}
+
+	if len(committerEmail) == 0 {
+		log.Printf("Unable to get committer email from blame output for %s", filePath)
+		return
+	}
+
+	td.blameMux.Lock()
+	defer td.blameMux.Unlock()
+	td.blameMap[commentHash] = &BlameDetails{
+		committerEmail: committerEmail,
+		commitHash:     commitHash,
+	}
+}
+
+func calculateCommentHash(c *ToDoComment) string {
 	h := md5.New()
 	io.WriteString(h, c.File)
 	io.WriteString(h, c.Title)
 	io.WriteString(h, c.Body)
-	s := hex.EncodeToString(h.Sum(nil))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (td *ToDoGenerator) addComment(c *ToDoComment) {
+	defer td.commentsWG.Done()
+
+	s := calculateCommentHash(c)
 
 	td.commentMux.Lock()
 	defer td.commentMux.Unlock()
@@ -216,7 +307,10 @@ func (td *ToDoGenerator) addComment(c *ToDoComment) {
 		log.Printf("Skipping comment duplicate in %v:%v", c.File, c.Line)
 		return
 	}
-
+	if td.blameFlag {
+		td.commentsWG.Add(1)
+		go td.getBlameDetails(s, c.File, c.Line)
+	}
 	if countTitleWords(c.Title) >= td.minWords || len(c.Title) >= td.minChars {
 		td.addedMap[s] = true
 		td.comments = append(td.comments, c)
