@@ -67,10 +67,12 @@ type env struct {
 }
 
 type service struct {
-	ctx    context.Context
-	client *github.Client
-	env    *env
-	wg     sync.WaitGroup
+	ctx          context.Context
+	client       *github.Client
+	env          *env
+	wg           sync.WaitGroup
+	newIssuesMap map[string]*github.Issue
+	assigneeMap  map[string]string
 }
 
 func (e *env) sourceRoot() string {
@@ -273,13 +275,12 @@ func (s *service) createProjectCard(issue *github.Issue) {
 	log.Printf("Created a project card. issue=%v card=%v", issue.GetID(), card.GetID())
 }
 
-func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment, newIssueMap *map[string]*github.Issue) {
+func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
 	count := 0
 
 	for _, c := range comments {
-		_, ok := issueMap[c.Title]
-		if !ok {
+		if _, ok := issueMap[c.Title]; !ok {
 			body := c.Body + "\n\n"
 			if c.Issue > 0 {
 				body += fmt.Sprintf("Parent issue: #%v\n", c.Issue)
@@ -313,7 +314,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 				continue
 			}
 
-			(*newIssueMap)[c.Title] = issue
+			s.newIssuesMap[c.Title] = issue
 			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.GetID())
 
 			if s.env.projectColumnID != -1 {
@@ -331,9 +332,10 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 	log.Printf("Created new issues. count=%v", count)
 }
 
-func (s *service) assignNewIssues(issueMap map[string]*github.Issue, assigneeMap *map[string]string) {
-	for title, assignee := range *assigneeMap {
-		issue := issueMap[title]
+func (s *service) assignNewIssues() {
+	log.Printf("Adding assignees to newly created issues.")
+	for title, assignee := range s.assigneeMap {
+		issue := s.newIssuesMap[title]
 		issueNumber := issue.GetNumber()
 		req := &github.IssueRequest{
 			Assignees: &[]string{assignee},
@@ -347,20 +349,20 @@ func (s *service) assignNewIssues(issueMap map[string]*github.Issue, assigneeMap
 	}
 }
 
-func (s *service) getAssigneeFromCommitHash(commitHash string, title string, assigneeMap *map[string]string, successCount *int, assigneeMapMux sync.Locker, wg *sync.WaitGroup) {
+func (s *service) retrieveCommitAuthor(commitHash string, title string, successCount *int, assigneeMapMux sync.Locker, wg *sync.WaitGroup) {
 	defer wg.Done()
 	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, commitHash, &github.ListOptions{})
 	if err != nil {
 		log.Printf("Error while getting commit from commit hash. err=%v", err)
 	} else {
 		assigneeMapMux.Lock()
-		defer assigneeMapMux.Unlock()
-		(*assigneeMap)[title] = *commit.Author.Login
+		s.assigneeMap[title] = *commit.Author.Login
 		*successCount++
+		assigneeMapMux.Unlock()
 	}
 }
 
-func (s *service) getAssigneesForNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment, assigneeMap *map[string]string) {
+func (s *service) retrieveNewIssueAssignees(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
 
 	var wg sync.WaitGroup
@@ -368,12 +370,11 @@ func (s *service) getAssigneesForNewIssues(issueMap map[string]*github.Issue, co
 	successCount := 0
 	var assigneeMapMux sync.Mutex
 	for _, c := range comments {
-		_, ok := issueMap[c.Title]
-		if !ok {
+		if _, ok := issueMap[c.Title]; !ok {
 			totalNewIssues++
 			if len(c.CommitHash) > 0 {
 				wg.Add(1)
-				go s.getAssigneeFromCommitHash(c.CommitHash, c.Title, assigneeMap, &successCount, &assigneeMapMux, &wg)
+				go s.retrieveCommitAuthor(c.CommitHash, c.Title, &successCount, &assigneeMapMux, &wg)
 			}
 		}
 	}
@@ -494,9 +495,11 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	svc := &service{
-		ctx:    ctx,
-		client: github.NewClient(tc),
-		env:    env,
+		ctx:          ctx,
+		client:       github.NewClient(tc),
+		env:          env,
+		newIssuesMap: make(map[string]*github.Issue),
+		assigneeMap:  make(map[string]string),
 	}
 
 	env.debugPrint()
@@ -553,7 +556,6 @@ func main() {
 	log.Printf("Extracted TODO comments. count=%v", len(comments))
 
 	issueMap := make(map[string]*github.Issue)
-	newIssuesMap := make(map[string]*github.Issue)
 	for _, i := range issues {
 		issueMap[i.GetTitle()] = i
 	}
@@ -562,20 +564,18 @@ func main() {
 	go svc.closeMissingIssues(issueMap, comments)
 
 	svc.wg.Add(1)
-	go svc.openNewIssues(issueMap, comments, &newIssuesMap)
+	go svc.openNewIssues(issueMap, comments)
 
-	assigneeMap := make(map[string]string)
 	if env.assignFromBlame {
 		svc.wg.Add(1)
-		go svc.getAssigneesForNewIssues(issueMap, comments, &assigneeMap)
+		go svc.retrieveNewIssueAssignees(issueMap, comments)
 	}
 
 	log.Printf("Waiting for issues management to finish")
 	svc.wg.Wait()
 
-	if env.assignFromBlame && len(newIssuesMap) > 0 {
-		log.Printf("Adding assignees to newly created issues.")
-		svc.assignNewIssues(newIssuesMap, &assigneeMap)
+	if env.assignFromBlame && len(svc.newIssuesMap) > 0 {
+		svc.assignNewIssues()
 	}
 
 	fmt.Println(fmt.Sprintf(`::set-output name=scannedIssues::%s`, "1"))
