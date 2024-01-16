@@ -67,12 +67,13 @@ type env struct {
 }
 
 type service struct {
-	ctx          context.Context
-	client       *github.Client
-	env          *env
-	wg           sync.WaitGroup
-	newIssuesMap map[string]*github.Issue
-	assigneeMap  map[string]string
+	ctx               context.Context
+	client            *github.Client
+	env               *env
+	wg                sync.WaitGroup
+	newIssuesMap      map[string]*github.Issue
+	assigneeMap       map[string]string
+	commitAuthorCache map[string]string
 }
 
 func (e *env) sourceRoot() string {
@@ -350,11 +351,18 @@ func (s *service) assignNewIssues() {
 }
 
 func (s *service) retrieveCommitAuthor(commitHash string, title string) {
+	// First check cache to see if this commit was already retrieved before
+	if commitAuthor, ok := s.commitAuthorCache[commitHash]; ok {
+		s.assigneeMap[title] = commitAuthor
+		return
+	}
+
 	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, commitHash, &github.ListOptions{})
 	if err != nil {
 		log.Printf("Error while getting commit from commit hash. err=%v", err)
 	} else {
 		s.assigneeMap[title] = *commit.Author.Login
+		s.commitAuthorCache[commitHash] = *commit.Author.Login
 	}
 }
 
@@ -486,11 +494,12 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	svc := &service{
-		ctx:          ctx,
-		client:       github.NewClient(tc),
-		env:          env,
-		newIssuesMap: make(map[string]*github.Issue),
-		assigneeMap:  make(map[string]string),
+		ctx:               ctx,
+		client:            github.NewClient(tc),
+		env:               env,
+		newIssuesMap:      make(map[string]*github.Issue),
+		assigneeMap:       make(map[string]string),
+		commitAuthorCache: make(map[string]string),
 	}
 
 	env.debugPrint()
