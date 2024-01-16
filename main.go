@@ -349,38 +349,29 @@ func (s *service) assignNewIssues() {
 	}
 }
 
-func (s *service) retrieveCommitAuthor(commitHash string, title string, successCount *int, assigneeMapMux sync.Locker, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (s *service) retrieveCommitAuthor(commitHash string, title string) {
 	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, commitHash, &github.ListOptions{})
 	if err != nil {
 		log.Printf("Error while getting commit from commit hash. err=%v", err)
 	} else {
-		assigneeMapMux.Lock()
 		s.assigneeMap[title] = *commit.Author.Login
-		*successCount++
-		assigneeMapMux.Unlock()
 	}
 }
 
 func (s *service) retrieveNewIssueAssignees(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
 
-	var wg sync.WaitGroup
 	totalNewIssues := 0
-	successCount := 0
-	var assigneeMapMux sync.Mutex
 	for _, c := range comments {
 		if _, ok := issueMap[c.Title]; !ok {
 			totalNewIssues++
 			if len(c.CommitHash) > 0 {
-				wg.Add(1)
-				go s.retrieveCommitAuthor(c.CommitHash, c.Title, &successCount, &assigneeMapMux, &wg)
+				s.retrieveCommitAuthor(c.CommitHash, c.Title)
 			}
 		}
 	}
-	wg.Wait()
 
-	log.Printf("Got assignees for %v of %v new issues.", successCount, totalNewIssues)
+	log.Printf("Got assignees for %v of %v new issues.", len(s.assigneeMap), totalNewIssues)
 }
 
 func (s *service) canCloseIssue(issue *github.Issue) bool {
