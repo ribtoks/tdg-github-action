@@ -67,13 +67,13 @@ type env struct {
 }
 
 type service struct {
-	ctx               context.Context
-	client            *github.Client
-	env               *env
-	wg                sync.WaitGroup
-	newIssuesMap      map[string]*github.Issue
-	assigneeMap       map[string]string
-	commitAuthorCache map[string]string
+	ctx                     context.Context
+	client                  *github.Client
+	env                     *env
+	wg                      sync.WaitGroup
+	newIssuesMap            map[string]*github.Issue
+	issueTitleToAssigneeMap map[string]string
+	commitToAuthorCache     map[string]string
 }
 
 func (e *env) sourceRoot() string {
@@ -334,15 +334,14 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 }
 
 func (s *service) assignNewIssues() {
-	log.Printf("Adding assignees to newly created issues.")
-	for title, assignee := range s.assigneeMap {
+	log.Printf("Adding assignees to %v newly created issues...", len(s.issueTitleToAssigneeMap))
+	for title, assignee := range s.issueTitleToAssigneeMap {
 		issue := s.newIssuesMap[title]
 		issueNumber := issue.GetNumber()
 		req := &github.IssueRequest{
 			Assignees: &[]string{assignee},
 		}
-		_, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, issueNumber, req)
-		if err != nil {
+		if _, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, issueNumber, req); err != nil {
 			log.Printf("Error while assigning %v to issue %v. err=%v", assignee, issueNumber, err)
 		} else {
 			log.Printf("Successfully assigned %v to issue %v.", assignee, issueNumber)
@@ -352,17 +351,19 @@ func (s *service) assignNewIssues() {
 
 func (s *service) retrieveCommitAuthor(commitHash string, title string) {
 	// First check cache to see if this commit was already retrieved before
-	if commitAuthor, ok := s.commitAuthorCache[commitHash]; ok {
-		s.assigneeMap[title] = commitAuthor
+	if commitAuthor, ok := s.commitToAuthorCache[commitHash]; ok {
+		s.issueTitleToAssigneeMap[title] = commitAuthor
 		return
 	}
 
 	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, commitHash, &github.ListOptions{})
 	if err != nil {
 		log.Printf("Error while getting commit from commit hash. err=%v", err)
+	} else if commit != nil && commit.Author != nil && len(*commit.Author.Login) > 0 {
+		s.issueTitleToAssigneeMap[title] = *commit.Author.Login
+		s.commitToAuthorCache[commitHash] = *commit.Author.Login
 	} else {
-		s.assigneeMap[title] = *commit.Author.Login
-		s.commitAuthorCache[commitHash] = *commit.Author.Login
+		log.Printf("Error: No author mentioned in commit '%v'", commitHash)
 	}
 }
 
@@ -379,7 +380,7 @@ func (s *service) retrieveNewIssueAssignees(issueMap map[string]*github.Issue, c
 		}
 	}
 
-	log.Printf("Got assignees for %v of %v new issues.", len(s.assigneeMap), totalNewIssues)
+	log.Printf("Got assignees for %v of %v new issues.", len(s.issueTitleToAssigneeMap), totalNewIssues)
 }
 
 func (s *service) canCloseIssue(issue *github.Issue) bool {
@@ -494,12 +495,12 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	svc := &service{
-		ctx:               ctx,
-		client:            github.NewClient(tc),
-		env:               env,
-		newIssuesMap:      make(map[string]*github.Issue),
-		assigneeMap:       make(map[string]string),
-		commitAuthorCache: make(map[string]string),
+		ctx:                     ctx,
+		client:                  github.NewClient(tc),
+		env:                     env,
+		newIssuesMap:            make(map[string]*github.Issue),
+		issueTitleToAssigneeMap: make(map[string]string),
+		commitToAuthorCache:     make(map[string]string),
 	}
 
 	env.debugPrint()

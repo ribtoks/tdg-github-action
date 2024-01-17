@@ -57,7 +57,7 @@ inputs:
     description: "Create commit reference in the comments before closing the issue"
     default: "0"
   ASSIGN_FROM_BLAME:
-    description: "Assign issue to the author of the comment via git blame"
+    description: "Get the author of the comment via git API from the commit hash of the comment and assign to the issue created"
     default: "0"
 runs:
   using: "docker"
