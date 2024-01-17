@@ -7,7 +7,6 @@ import (
 	"math"
 	"net/url"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -527,27 +526,6 @@ func main() {
 		env.minWords,
 		env.minChars,
 		env.concurrency)
-
-	if env.assignFromBlame {
-		root := env.sourceRoot()
-		for strings.HasSuffix(root, "/.") || strings.HasSuffix(root, "/") {
-			root = strings.TrimSuffix(root, "/.")
-			root = strings.TrimSuffix(root, "/")
-		}
-
-		command := "git"
-		args := []string{"config", "--global", "--add", "safe.directory", root}
-
-		cmd := exec.Command(command, args...)
-		out, err := cmd.Output()
-		if out != nil {
-			fmt.Println(out)
-		}
-		if err != nil {
-			fmt.Printf("Error running git command: %v\n", err)
-			return
-		}
-	}
 
 	comments, err := td.Generate()
 	if err != nil {
