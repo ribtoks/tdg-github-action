@@ -3,7 +3,7 @@
 [![Build](https://github.com/ribtoks/tdg-github-action/workflows/Build/badge.svg)](https://github.com/ribtoks/tdg-github-action/actions)
 [![Integration Test](https://github.com/ribtoks/tdg-github-action/workflows/Integration%20Test/badge.svg)](https://github.com/ribtoks/tdg-github-action/actions)
 
-GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Optionally issues are added to a Project Column that you specify. Source code is parsed using [tdg](https://github.com/ribtoks/tdg) which supports comments for almost all existing languages.
+GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Optionally issues are added to a Project Column that you specify. Source code is parsed using [tdg](https://gitlab.com/ribtoks/tdg) which supports comments for almost all existing languages.
 
 When a new todo comment is added, a new issue is created. When this comment is removed on the branch it was added, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
