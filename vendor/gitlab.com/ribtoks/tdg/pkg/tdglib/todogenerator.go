@@ -73,9 +73,31 @@ type ToDoGenerator struct {
 	semaphore  chan bool
 }
 
+// Marks root directory as safe so that Git commands can run
+func markRootAsSafeForGit(root string) {
+	for strings.HasSuffix(root, "/.") || strings.HasSuffix(root, "/") {
+		root = strings.TrimSuffix(root, "/.")
+		root = strings.TrimSuffix(root, "/")
+	}
+
+	log.Printf("Marking '%v' as safe", root)
+	command := "git"
+	args := []string{"config", "--global", "--add", "safe.directory", root}
+
+	cmd := exec.Command(command, args...)
+	out, err := cmd.Output()
+	if out != nil {
+		log.Println(out)
+	}
+	if err != nil {
+		log.Printf("Error running git command: %v\n", err)
+	}
+}
+
 // NewToDoGenerator creates new generator for a source root
 func NewToDoGenerator(root string, include []string, exclude []string, blameFlag bool, minWords, minChars, concurrency int) *ToDoGenerator {
 	log.Printf("Using source code root %v", root)
+
 	log.Printf("Using %v include filters", include)
 	ifilters := make([]*regexp.Regexp, 0, len(include))
 	for _, f := range include {
@@ -145,6 +167,10 @@ func (td *ToDoGenerator) Excludes(path string) bool {
 
 // Generate is an entry point to comment generation
 func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
+	if td.blameFlag {
+		markRootAsSafeForGit(td.root)
+	}
+
 	matchesCount := 0
 	totalFiles := 0
 	err := filepath.Walk(td.root, func(path string, info os.FileInfo, err error) error {
