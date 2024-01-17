@@ -62,13 +62,17 @@ type env struct {
 	extendedLabels    bool
 	dryRun            bool
 	commentIssue      bool
+	assignFromBlame   bool
 }
 
 type service struct {
-	ctx    context.Context
-	client *github.Client
-	env    *env
-	wg     sync.WaitGroup
+	ctx                     context.Context
+	client                  *github.Client
+	env                     *env
+	wg                      sync.WaitGroup
+	newIssuesMap            map[string]*github.Issue
+	issueTitleToAssigneeMap map[string]string
+	commitToAuthorCache     map[string]string
 }
 
 func (e *env) sourceRoot() string {
@@ -98,6 +102,7 @@ func environment() *env {
 		extendedLabels:    flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
 		closeOnSameBranch: flagToBool(os.Getenv("INPUT_CLOSE_ON_SAME_BRANCH")),
 		commentIssue:      flagToBool(os.Getenv("INPUT_COMMENT_ON_ISSUES")),
+		assignFromBlame:   flagToBool(os.Getenv("INPUT_ASSIGN_FROM_BLAME")),
 	}
 
 	var err error
@@ -275,8 +280,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 	count := 0
 
 	for _, c := range comments {
-		_, ok := issueMap[c.Title]
-		if !ok {
+		if _, ok := issueMap[c.Title]; !ok {
 			body := c.Body + "\n\n"
 			if c.Issue > 0 {
 				body += fmt.Sprintf("Parent issue: #%v\n", c.Issue)
@@ -284,6 +288,8 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 
 			if len(c.Author) > 0 {
 				body += fmt.Sprintf("Author: @%s\n", c.Author)
+			} else if len(c.CommitterEmail) > 0 {
+				body += fmt.Sprintf("Author: %s\n", c.CommitterEmail)
 			}
 
 			body += fmt.Sprintf("Line: %v\n%s", c.Line, s.createFileLink(c))
@@ -308,6 +314,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 				continue
 			}
 
+			s.newIssuesMap[c.Title] = issue
 			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.GetID())
 
 			if s.env.projectColumnID != -1 {
@@ -323,6 +330,56 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 	}
 
 	log.Printf("Created new issues. count=%v", count)
+}
+
+func (s *service) assignNewIssues() {
+	log.Printf("Adding assignees to %v newly created issues...", len(s.issueTitleToAssigneeMap))
+	for title, assignee := range s.issueTitleToAssigneeMap {
+		issue := s.newIssuesMap[title]
+		issueNumber := issue.GetNumber()
+		req := &github.IssueRequest{
+			Assignees: &[]string{assignee},
+		}
+		if _, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, issueNumber, req); err != nil {
+			log.Printf("Error while assigning %v to issue %v. err=%v", assignee, issueNumber, err)
+		} else {
+			log.Printf("Successfully assigned %v to issue %v.", assignee, issueNumber)
+		}
+	}
+}
+
+func (s *service) retrieveCommitAuthor(commitHash string, title string) {
+	// First check cache to see if this commit was already retrieved before
+	if commitAuthor, ok := s.commitToAuthorCache[commitHash]; ok {
+		s.issueTitleToAssigneeMap[title] = commitAuthor
+		return
+	}
+
+	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, commitHash, &github.ListOptions{})
+	if err != nil {
+		log.Printf("Error while getting commit from commit hash. err=%v", err)
+	} else if commit != nil && commit.Author != nil && len(*commit.Author.Login) > 0 {
+		s.issueTitleToAssigneeMap[title] = *commit.Author.Login
+		s.commitToAuthorCache[commitHash] = *commit.Author.Login
+	} else {
+		log.Printf("Error: No author mentioned in commit '%v'", commitHash)
+	}
+}
+
+func (s *service) retrieveNewIssueAssignees(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
+	defer s.wg.Done()
+
+	totalNewIssues := 0
+	for _, c := range comments {
+		if _, ok := issueMap[c.Title]; !ok {
+			totalNewIssues++
+			if len(c.CommitHash) > 0 {
+				s.retrieveCommitAuthor(c.CommitHash, c.Title)
+			}
+		}
+	}
+
+	log.Printf("Got assignees for %v of %v new issues.", len(s.issueTitleToAssigneeMap), totalNewIssues)
 }
 
 func (s *service) canCloseIssue(issue *github.Issue) bool {
@@ -437,9 +494,12 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 
 	svc := &service{
-		ctx:    ctx,
-		client: github.NewClient(tc),
-		env:    env,
+		ctx:                     ctx,
+		client:                  github.NewClient(tc),
+		env:                     env,
+		newIssuesMap:            make(map[string]*github.Issue),
+		issueTitleToAssigneeMap: make(map[string]string),
+		commitToAuthorCache:     make(map[string]string),
 	}
 
 	env.debugPrint()
@@ -462,7 +522,7 @@ func main() {
 	td := tdglib.NewToDoGenerator(env.sourceRoot(),
 		includePatterns,
 		excludePatterns,
-		false /*blame*/,
+		env.assignFromBlame,
 		env.minWords,
 		env.minChars,
 		env.concurrency)
@@ -485,8 +545,17 @@ func main() {
 	svc.wg.Add(1)
 	go svc.openNewIssues(issueMap, comments)
 
+	if env.assignFromBlame {
+		svc.wg.Add(1)
+		go svc.retrieveNewIssueAssignees(issueMap, comments)
+	}
+
 	log.Printf("Waiting for issues management to finish")
 	svc.wg.Wait()
+
+	if env.assignFromBlame && len(svc.newIssuesMap) > 0 {
+		svc.assignNewIssues()
+	}
 
 	fmt.Println(fmt.Sprintf(`::set-output name=scannedIssues::%s`, "1"))
 }
