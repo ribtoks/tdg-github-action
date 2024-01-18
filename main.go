@@ -545,7 +545,7 @@ func main() {
 	svc.wg.Add(1)
 	go svc.openNewIssues(issueMap, comments)
 
-	if env.assignFromBlame {
+	if env.assignFromBlame && !env.dryRun {
 		svc.wg.Add(1)
 		go svc.retrieveNewIssueAssignees(issueMap, comments)
 	}
@@ -553,7 +553,7 @@ func main() {
 	log.Printf("Waiting for issues management to finish")
 	svc.wg.Wait()
 
-	if env.assignFromBlame && len(svc.newIssuesMap) > 0 {
+	if env.assignFromBlame && !env.dryRun && len(svc.newIssuesMap) > 0 {
 		svc.assignNewIssues()
 	}
 
