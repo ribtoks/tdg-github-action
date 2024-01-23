@@ -337,6 +337,10 @@ func (s *service) assignNewIssues() {
 	for title, assignee := range s.issueTitleToAssigneeMap {
 		issue := s.newIssuesMap[title]
 		issueNumber := issue.GetNumber()
+		if issueNumber == 0 {
+			// Issue was not created
+			continue
+		}
 		req := &github.IssueRequest{
 			Assignees: &[]string{assignee},
 		}
