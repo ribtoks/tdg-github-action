@@ -353,8 +353,11 @@ func (s *service) assignNewIssues() {
 }
 
 func (s *service) retrieveCommitAuthor(commitHash string, title string) {
+	log.Printf("Retrieving author for commit '%v'...", commitHash)
+
 	// First check cache to see if this commit was already retrieved before
 	if commitAuthor, ok := s.commitToAuthorCache[commitHash]; ok {
+		log.Printf("Cache hit. Returning author='%v' for commit '%v'", commitAuthor, commitHash)
 		s.issueTitleToAssigneeMap[title] = commitAuthor
 		return
 	}
