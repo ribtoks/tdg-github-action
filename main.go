@@ -361,6 +361,7 @@ func (s *service) retrieveCommitAuthor(commitHash string, title string) {
 	} else if commit != nil && commit.Author != nil && len(*commit.Author.Login) > 0 {
 		s.issueTitleToAssigneeMap[title] = *commit.Author.Login
 		s.commitToAuthorCache[commitHash] = *commit.Author.Login
+		log.Printf("Successfully got author '%v' for commit '%v'\nfor issue title '%v'.", *commit.Author.Login, commitHash, title)
 	} else {
 		log.Printf("Error: No author mentioned in commit '%v'", commitHash)
 	}
