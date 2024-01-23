@@ -337,7 +337,7 @@ func (s *service) assignNewIssues() {
 	for title, assignee := range s.issueTitleToAssigneeMap {
 		issue, ok := s.newIssuesMap[title]
 		if !ok {
-			// Issue was not created
+			log.Printf("Skipping assigning an issue that was not created. title=%v", title)
 			continue
 		}
 		issueNumber := issue.GetNumber()
