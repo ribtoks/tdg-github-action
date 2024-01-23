@@ -335,12 +335,12 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 func (s *service) assignNewIssues() {
 	log.Printf("Adding assignees to %v newly created issues...", len(s.issueTitleToAssigneeMap))
 	for title, assignee := range s.issueTitleToAssigneeMap {
-		issue := s.newIssuesMap[title]
-		issueNumber := issue.GetNumber()
-		if issueNumber == 0 {
+		issue, ok := s.newIssuesMap[title]
+		if !ok {
 			// Issue was not created
 			continue
 		}
+		issueNumber := issue.GetNumber()
 		req := &github.IssueRequest{
 			Assignees: &[]string{assignee},
 		}
