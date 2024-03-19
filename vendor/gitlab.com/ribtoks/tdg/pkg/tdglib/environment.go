@@ -66,11 +66,11 @@ func (env *Environment) Run(cmd string, arg ...string) string {
 	err := command.Run()
 	if err != nil {
 		log.Printf("Command run error: %s", err)
-		log.Printf("Command stderr: %s", string(stderr.Bytes()))
+		log.Printf("Command stderr: %s", stderr.String())
 		return ""
 	}
 
-	outStr := string(stdout.Bytes())
+	outStr := stdout.String()
 	return strings.TrimSpace(outStr)
 }
 

@@ -26,6 +26,7 @@ const (
 
 var (
 	commentPrefixes        = [...]string{"TODO", "FIXME", "BUG", "HACK"}
+	sourceControlSystems   = [...]string{".git", ".hg", ".svn", ".tf", ".bzr"}
 	emptyRunes             = [...]rune{}
 	categoryIniKey         = "category"
 	issueIniKey            = "issue"
@@ -71,6 +72,7 @@ type ToDoGenerator struct {
 	blameMap   map[string]*BlameDetails
 	blameMux   sync.Mutex
 	semaphore  chan bool
+	excludeSVC bool
 }
 
 // Marks root directory as safe so that Git commands can run
@@ -118,16 +120,17 @@ func NewToDoGenerator(root string, include []string, exclude []string, blameFlag
 	}
 
 	return &ToDoGenerator{
-		root:      absolutePath,
-		include:   ifilters,
-		exclude:   efilters,
-		minWords:  minWords,
-		minChars:  minChars,
-		comments:  make([]*ToDoComment, 0),
-		addedMap:  make(map[string]bool),
-		semaphore: make(chan bool, concurrency),
-		blameFlag: blameFlag,
-		blameMap:  make(map[string]*BlameDetails),
+		root:       absolutePath,
+		include:    ifilters,
+		exclude:    efilters,
+		minWords:   minWords,
+		minChars:   minChars,
+		comments:   make([]*ToDoComment, 0),
+		addedMap:   make(map[string]bool),
+		semaphore:  make(chan bool, concurrency),
+		blameFlag:  blameFlag,
+		blameMap:   make(map[string]*BlameDetails),
+		excludeSVC: true,
 	}
 }
 
@@ -154,6 +157,19 @@ func (td *ToDoGenerator) Includes(path string) bool {
 
 func (td *ToDoGenerator) Excludes(path string) bool {
 	anyMatch := false
+
+	if td.excludeSVC {
+		for _, svc := range sourceControlSystems {
+			if strings.HasPrefix(path, filepath.Join(td.root, svc)) {
+				anyMatch = true
+				break
+			}
+		}
+
+		if anyMatch {
+			return true
+		}
+	}
 
 	for _, f := range td.exclude {
 		if f.MatchString(path) {
@@ -315,9 +331,9 @@ func (td *ToDoGenerator) getBlameDetails(commentHash, filePath string, line int)
 
 func calculateCommentHash(c *ToDoComment) string {
 	h := md5.New()
-	io.WriteString(h, c.File)
-	io.WriteString(h, c.Title)
-	io.WriteString(h, c.Body)
+	_, _ = io.WriteString(h, c.File)
+	_, _ = io.WriteString(h, c.Title)
+	_, _ = io.WriteString(h, c.Body)
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -513,7 +529,7 @@ func (t *ToDoComment) parseIniProperties(line string) error {
 
 // NewComment creates new task from parsed comment lines
 func NewComment(path string, lineNumber int, ctype, author string, body []string) *ToDoComment {
-	if body == nil || len(body) == 0 {
+	if len(body) == 0 {
 		return nil
 	}
 

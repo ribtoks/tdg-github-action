@@ -9,7 +9,7 @@ github.com/google/go-github/v49/github
 github.com/google/go-querystring/query
 # github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26
 github.com/zieckey/goini
-# gitlab.com/ribtoks/tdg v0.0.4
+# gitlab.com/ribtoks/tdg v0.0.5
 ## explicit
 gitlab.com/ribtoks/tdg/pkg/tdglib
 # golang.org/x/crypto v0.16.0
