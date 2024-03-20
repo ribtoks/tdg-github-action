@@ -160,7 +160,11 @@ func (td *ToDoGenerator) Excludes(path string) bool {
 
 	if td.excludeSVC {
 		for _, svc := range sourceControlSystems {
-			if strings.HasPrefix(path, filepath.Join(td.root, svc)) {
+			prefix := filepath.Join(td.root, svc)
+			if !strings.HasSuffix(prefix, string(filepath.Separator)) {
+				prefix += string(filepath.Separator)
+			}
+			if strings.HasPrefix(path, prefix) {
 				anyMatch = true
 				break
 			}
@@ -205,17 +209,6 @@ func (td *ToDoGenerator) Generate() ([]*ToDoComment, error) {
 		}
 
 		if td.Excludes(path) {
-			return nil
-		}
-
-		anyMatch := false
-		for _, f := range td.include {
-			if f.MatchString(path) {
-				anyMatch = true
-				break
-			}
-		}
-		if !anyMatch && len(td.include) > 0 {
 			return nil
 		}
 

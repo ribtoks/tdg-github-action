@@ -862,8 +862,8 @@ github.com/zeebo/assert v1.3.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN
 github.com/zeebo/xxh3 v1.0.2/go.mod h1:5NWz9Sef7zIDm2JHfFlcQvNekmcEl9ekUZQQKCYaDcA=
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26 h1:E0lEWrifmR0ACbGf5PLji1XbW6rtIXLHCXO/YOqi0AE=
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26/go.mod h1:TQpdgg7I9+PFIkatlx/dnZyZb4iZyCUx1HJj4rXi3+E=
-gitlab.com/ribtoks/tdg v0.0.5 h1:qwcH8IgE5H/388PG43hgSNJGsO4P2E7omkT9p9uWjm4=
-gitlab.com/ribtoks/tdg v0.0.5/go.mod h1:XDYfJNbUbnnCW6lGCC2TLumDieEI04L0VtjVbgDKz1w=
+gitlab.com/ribtoks/tdg v0.0.6 h1:d1ilbYxq/FKTReQI8Nyi1hAAcsrDTVgsF0B3CKKkgj0=
+gitlab.com/ribtoks/tdg v0.0.6/go.mod h1:XDYfJNbUbnnCW6lGCC2TLumDieEI04L0VtjVbgDKz1w=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
