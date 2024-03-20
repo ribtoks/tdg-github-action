@@ -12,7 +12,7 @@ github.com/zieckey/goini
 # gitlab.com/ribtoks/tdg v0.0.6
 ## explicit
 gitlab.com/ribtoks/tdg/pkg/tdglib
-# golang.org/x/crypto v0.16.0
+# golang.org/x/crypto v0.21.0
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp
 golang.org/x/crypto/openpgp/armor
@@ -20,9 +20,9 @@ golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
-# golang.org/x/net v0.19.0
+# golang.org/x/net v0.22.0
 golang.org/x/net/context
-# golang.org/x/oauth2 v0.15.0
+# golang.org/x/oauth2 v0.18.0
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
