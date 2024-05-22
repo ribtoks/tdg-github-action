@@ -8,7 +8,7 @@ ENV GOFLAGS="-mod=vendor"
 # Statically compile our app for use in the final container
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -v -o app .
 
-FROM alpine:3.19
+FROM alpine:3.20
 
 COPY --from=builder /app/app /app
 
