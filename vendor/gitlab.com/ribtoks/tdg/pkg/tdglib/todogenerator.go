@@ -32,8 +32,8 @@ var (
 	issueIniKey            = "issue"
 	estimateIniKey         = "estimate"
 	authorIniKey           = "author"
-	errCannotParseIni      = errors.New("Cannot parse ini properties")
-	errCannotParseEstimate = errors.New("Cannot parse time estimate")
+	errCannotParseIni      = errors.New("cannot parse ini properties")
+	errCannotParseEstimate = errors.New("cannot parse time estimate")
 )
 
 // ToDoComment a task that is parsed from TODO comment
@@ -73,6 +73,8 @@ type ToDoGenerator struct {
 	blameMux   sync.Mutex
 	semaphore  chan bool
 	excludeSVC bool
+	lineCount  map[string]int
+	linesMux   sync.Mutex
 }
 
 // Marks root directory as safe so that Git commands can run
@@ -89,7 +91,7 @@ func markRootAsSafeForGit(root string) {
 	cmd := exec.Command(command, args...)
 	out, err := cmd.Output()
 	if out != nil {
-		log.Println(out)
+		log.Println(string(out))
 	}
 	if err != nil {
 		log.Printf("Error running git command: %v\n", err)
@@ -131,6 +133,7 @@ func NewToDoGenerator(root string, include []string, exclude []string, blameFlag
 		blameFlag:  blameFlag,
 		blameMap:   make(map[string]*BlameDetails),
 		excludeSVC: true,
+		lineCount:  make(map[string]int),
 	}
 }
 
@@ -183,6 +186,18 @@ func (td *ToDoGenerator) Excludes(path string) bool {
 	}
 
 	return anyMatch
+}
+
+func (td *ToDoGenerator) FileLines(path string) int {
+	td.linesMux.Lock()
+	defer td.linesMux.Unlock()
+
+	n, ok := td.lineCount[path]
+	if ok {
+		return n
+	}
+
+	return 0
 }
 
 // Generate is an entry point to comment generation
@@ -551,6 +566,7 @@ func (td *ToDoGenerator) accountComment(path string, lineNumber int, ctype, auth
 
 	relativePath, err := filepath.Rel(td.root, path)
 	if err != nil {
+		log.Println(err)
 		relativePath = path
 	}
 	c := NewComment(relativePath, lineNumber, ctype, author, body)
@@ -607,4 +623,12 @@ func (td *ToDoGenerator) parseFile(path string) {
 	if lastType != "" {
 		td.accountComment(path, lastStart+1, lastType, lastAuthor, todo)
 	}
+
+	relativePath, err := filepath.Rel(td.root, path)
+	if err != nil {
+		relativePath = path
+	}
+	td.linesMux.Lock()
+	td.lineCount[relativePath] = lineNumber
+	td.linesMux.Unlock()
 }

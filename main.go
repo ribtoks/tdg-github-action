@@ -68,6 +68,7 @@ type env struct {
 type service struct {
 	ctx                     context.Context
 	client                  *github.Client
+	tdg                     *tdglib.ToDoGenerator
 	env                     *env
 	wg                      sync.WaitGroup
 	newIssuesMap            map[string]*github.Issue
@@ -200,11 +201,17 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 
 func escapePath(path string) string {
 	parts := strings.Split(path, "/")
+	result := make([]string, 0, len(parts))
 	for i := range parts {
-		parts[i] = url.PathEscape(parts[i])
+		part := strings.TrimSpace(parts[i])
+		if len(part) == 0 {
+			continue
+		}
+
+		result = append(result, url.PathEscape(part))
 	}
 
-	return strings.Join(parts, "/")
+	return strings.Join(result, "/")
 }
 
 func (s *service) createFileLink(c *tdglib.ToDoComment) string {
@@ -214,6 +221,9 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 	}
 
 	end := c.Line + contextLinesDown
+	if maxLines := s.tdg.FileLines(c.File); (start < maxLines) && (maxLines < end) {
+		end = maxLines
+	}
 
 	root := s.env.root
 	root = strings.TrimPrefix(root, ".")
@@ -221,8 +231,10 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 	root = strings.TrimSuffix(root, "/")
 
 	filepath := c.File
-	if root != "." {
+	if (root != ".") && (root != "/") && (root != "") {
 		filepath = fmt.Sprintf("%v/%v", root, c.File)
+	} else if (root == "/") && !strings.HasPrefix(c.File, "/") {
+		filepath = "/" + c.File
 	}
 
 	safeFilepath := escapePath(filepath)
@@ -525,7 +537,7 @@ func main() {
 		excludePatterns = append(excludePatterns, env.excludeRE)
 	}
 
-	td := tdglib.NewToDoGenerator(env.sourceRoot(),
+	svc.tdg = tdglib.NewToDoGenerator(env.sourceRoot(),
 		includePatterns,
 		excludePatterns,
 		env.assignFromBlame,
@@ -533,7 +545,7 @@ func main() {
 		env.minChars,
 		env.concurrency)
 
-	comments, err := td.Generate()
+	comments, err := svc.tdg.Generate()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -563,5 +575,5 @@ func main() {
 		svc.assignNewIssues()
 	}
 
-	fmt.Println(fmt.Sprintf(`::set-output name=scannedIssues::%s`, "1"))
+	fmt.Println(`::set-output name=scannedIssues::1`)
 }
