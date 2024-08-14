@@ -146,6 +146,7 @@ func (e *env) debugPrint() {
 	log.Printf("Ref: %v", e.ref)
 	log.Printf("Sha: %v", e.sha)
 	log.Printf("Root: %v", e.root)
+	log.Printf("Branch: %v", e.branch)
 	log.Printf("Label: %v", e.label)
 	log.Printf("Column ID: %v", e.projectColumnID)
 	log.Printf("Extended labels: %v", e.extendedLabels)
@@ -418,13 +419,15 @@ func (s *service) canCloseIssue(issue *github.Issue) bool {
 
 			if branch == s.env.branch {
 				return true
+			} else {
+				log.Printf("Branch label does not match env. label_branch=%v env_branch=%v", branch, s.env.branch)
 			}
 		}
 	}
 
 	log.Printf("Checking issue labels. issue=%v any_branch=%v", issue.GetID(), anyBranch)
 
-	// if the issues does not have a branch tag, assume we can close it
+	// if the issue does not have a branch tag, assume we can close it
 	return !anyBranch
 }
 
