@@ -25,7 +25,6 @@ const (
 	defaultConcurrency   = 128
 	contextLinesUp       = 3
 	contextLinesDown     = 7
-	ghRoot               = "/github/workspace"
 	minEstimate          = 0.01
 	hourMinutes          = 60
 	labelBranchPrefix    = "branch: "
@@ -33,12 +32,12 @@ const (
 	labelAreaPrefix      = "area: "
 )
 
-func sourceRoot(root string) string {
+func sourceRoot(root string, workspace string) string {
 	if strings.HasPrefix(root, "/") {
-		return ghRoot + root
+		return workspace + root
 	}
 
-	return fmt.Sprintf("%s/%v", ghRoot, root)
+	return fmt.Sprintf("%s/%v", workspace, root)
 }
 
 type env struct {
@@ -52,6 +51,7 @@ type env struct {
 	branch            string
 	includeRE         string
 	excludeRE         string
+	directory         string
 	projectColumnID   int64
 	minWords          int
 	minChars          int
@@ -76,8 +76,8 @@ type service struct {
 	commitToAuthorCache     map[string]string
 }
 
-func (e *env) sourceRoot() string {
-	return sourceRoot(e.root)
+func (e *env) sourceRoot(workspace string) string {
+	return sourceRoot(e.root, workspace)
 }
 
 func flagToBool(s string) bool {
@@ -99,6 +99,7 @@ func environment() *env {
 		token:             os.Getenv("INPUT_TOKEN"),
 		includeRE:         os.Getenv("INPUT_INCLUDE_PATTERN"),
 		excludeRE:         os.Getenv("INPUT_EXCLUDE_PATTERN"),
+		directory:         os.Getenv("INPUT_DIRECTORY"),
 		dryRun:            flagToBool(os.Getenv("INPUT_DRY_RUN")),
 		extendedLabels:    flagToBool(os.Getenv("INPUT_EXTENDED_LABELS")),
 		closeOnSameBranch: flagToBool(os.Getenv("INPUT_CLOSE_ON_SAME_BRANCH")),
@@ -540,7 +541,7 @@ func main() {
 		excludePatterns = append(excludePatterns, env.excludeRE)
 	}
 
-	svc.tdg = tdglib.NewToDoGenerator(env.sourceRoot(),
+	svc.tdg = tdglib.NewToDoGenerator(env.sourceRoot(env.directory),
 		includePatterns,
 		excludePatterns,
 		env.assignFromBlame,

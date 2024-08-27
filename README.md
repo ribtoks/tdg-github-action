@@ -61,6 +61,7 @@ You can use this action together with [parent issue updater](https://github.com/
 | `COMMENT_ON_ISSUES` | Leave a comment in which commit the issue was closed (defaults to `0` - do not comment) |
 | `CONCURRENCY` | How many files to process in parallel (defaults to `128`) |
 | `ASSIGN_FROM_BLAME` | Get the author of the comment via git API from the commit hash of the comment and assign to the issue created (defaults to `0` - do not use) |
+| `VERSION` | The tag specifying the binary to use (see releases page; defaults to `latest` may be newer than you expect) |
 
 > **NOTE:** Keep in mind that you have to escape slashes in regex patterns when putting them to yaml
 
