@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,6 +32,7 @@ const (
 	labelBranchPrefix    = "branch: "
 	labelTypePrefix      = "type: "
 	labelAreaPrefix      = "area: "
+	labelLangPrefix      = "lang: "
 )
 
 func sourceRoot(root string) string {
@@ -253,6 +255,10 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 
 		if len(c.Category) > 0 {
 			labels = append(labels, labelAreaPrefix+c.Category)
+		}
+
+		if extension := filepath.Ext(c.File); len(extension) > 0 {
+			labels = append(labels, labelLangPrefix+strings.ToLower(extension))
 		}
 
 		if c.Estimate > minEstimate {

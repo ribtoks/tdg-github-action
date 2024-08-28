@@ -48,7 +48,7 @@ You can use this action together with [parent issue updater](https://github.com/
 | `SHA`  | SHA-1 value of the commit (required) |
 | `ROOT`  | Source code root (defaults to `.`) |
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
-| `EXTENDED_LABELS`  | Add additional labels to mark branch, issue type and estimate |
+| `EXTENDED_LABELS`  | Add additional labels to mark branch, code language, issue type and estimate |
 | `CLOSE_ON_SAME_BRANCH`  | Close issues only if they are missing from the same branch as they were created on (by default) |
 | `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (none by default) |
 | `INCLUDE_PATTERN`  | Regex to include source code files (includes all by default) |
