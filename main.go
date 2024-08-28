@@ -510,6 +510,27 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 	log.Printf("Closed issues. count=%v", count)
 }
 
+func appendGitHubActionOutput() {
+	githubOutput := os.Getenv("GITHUB_OUTPUT")
+	if githubOutput == "" {
+		fmt.Println("GITHUB_OUTPUT environment variable is not set")
+		return
+	}
+
+	f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error opening file: %v\n", err)
+		return
+	}
+	defer f.Close()
+
+	_, err = fmt.Fprintln(f, "scannedIssues=1")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing to file: %v\n", err)
+		return
+	}
+}
+
 func main() {
 	log.SetOutput(os.Stdout)
 
@@ -584,5 +605,5 @@ func main() {
 		svc.assignNewIssues()
 	}
 
-	fmt.Println(`::set-output name=scannedIssues::1`)
+	appendGitHubActionOutput()
 }
