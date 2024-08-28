@@ -23,14 +23,12 @@ import (
 // A Block represents an OpenPGP armored structure.
 //
 // The encoded form is:
+//    -----BEGIN Type-----
+//    Headers
 //
-//	-----BEGIN Type-----
-//	Headers
-//
-//	base64-encoded Bytes
-//	'=' base64 encoded checksum
-//	-----END Type-----
-//
+//    base64-encoded Bytes
+//    '=' base64 encoded checksum
+//    -----END Type-----
 // where Headers is a possibly empty sequence of Key: Value lines.
 //
 // Since the armored data can be very large, this package presents a streaming
@@ -156,7 +154,7 @@ func (r *openpgpReader) Read(p []byte) (n int, err error) {
 	n, err = r.b64Reader.Read(p)
 	r.currentCRC = crc24(r.currentCRC, p[:n])
 
-	if err == io.EOF && r.lReader.crcSet && r.lReader.crc != r.currentCRC&crc24Mask {
+	if err == io.EOF && r.lReader.crcSet && r.lReader.crc != uint32(r.currentCRC&crc24Mask) {
 		return 0, ArmorCorrupt
 	}
 
