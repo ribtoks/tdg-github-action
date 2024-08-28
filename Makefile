@@ -3,11 +3,10 @@
 GIT_COMMIT ?= $(shell git rev-list -1 HEAD)
 
 build:
-	export GOFLAGS="-mod=vendor"
-	go build
+	env GOFLAGS="-mod=vendor" CGO_ENABLED=0 go build -ldflags="-s -w -X main.GitCommit=$(GIT_COMMIT)" -o bin/github-tdg *.go
 
 test:
-	go test ./...
+	env GOFLAGS="-mod=vendor" CGO_ENABLED=0 go test ./...
 
 vendors:
 	go mod tidy

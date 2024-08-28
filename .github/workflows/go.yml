@@ -24,6 +24,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build
+        env:
+          GIT_COMMIT: "${{ github.sha }}"
         run: |
-          go get -d -v
-          go build -v .
+          make vendors
+          make build

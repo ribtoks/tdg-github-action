@@ -17,6 +17,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var (
+	GitCommit string
+)
+
 const (
 	defaultMinWords      = 3
 	defaultMinChars      = 30
@@ -533,6 +537,7 @@ func appendGitHubActionOutput() {
 
 func main() {
 	log.SetOutput(os.Stdout)
+	log.Printf("Starting. version=%v", GitCommit)
 
 	env := environment()
 	ctx := context.Background()
