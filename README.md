@@ -76,6 +76,10 @@ In case you are disabling `EXTENDED_LABELS`, then `CLOSE_ON_SAME_BRANCH` logic w
 |------------------------------------------------------|-----------------------------------------------|
 | `scannedIssues`  | Equals to `1` if completed successfully    |
 
+### Security (token)
+
+You can of course use a private token or, if you want to use a default `GITHUB_TOKEN`, available for CI, you need to add read and write permissions in the _Repository -> Settings -> Actions -> General -> Workflow permissions_ select `"Read and write permissions"`.
+
 ## Examples
 
 ### Workflow
