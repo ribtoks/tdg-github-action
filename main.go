@@ -261,7 +261,7 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 			labels = append(labels, labelAreaPrefix+c.Category)
 		}
 
-		if extension := filepath.Ext(c.File); len(extension) > 0 {
+		if extension := strings.TrimPrefix(filepath.Ext(c.File), "."); len(extension) > 0 {
 			labels = append(labels, labelLangPrefix+strings.ToLower(extension))
 		}
 
