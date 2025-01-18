@@ -43,6 +43,7 @@ You can use this action together with [parent issue updater](https://github.com/
 | Input | Description |
 |---|---|
 | `REPO`  | Repository name in the format of `owner/repo` (required)   |
+| `ISSUE_REPO`  | Repository to create issues in (if empty, `REPO` is used)   |
 | `TOKEN`  | Github [token](#security-token) used to create or close issues (required)  |
 | `REF`  | Git ref: branch or pull request (required)|
 | `SHA`  | SHA-1 value of the commit (required) |
@@ -111,7 +112,7 @@ jobs:
 
 Note escaped regex.
 
-If you want to only process TODO comments from master branch, modify the workflow `on` section like this:
+If you want to only process TODO comments from `master` branch, modify the workflow `on` section like this:
 
 ```yaml
 on:
@@ -123,7 +124,7 @@ on:
 
 ### TODO comments
 
-Comments are parsed using [tdg](https://github.com/ribtoks/tdg). Supported comments: `//`, `#`, `%`, `;`, `*`.
+Comments are parsed using [tdg](https://gitlab.com/ribtoks/tdg). Supported comments: `//`, `#`, `%`, `;`, `*`.
 
 Example of the comment (everything but the first line is optional):
 
@@ -132,4 +133,4 @@ Example of the comment (everything but the first line is optional):
     // This is a multiline description of the issue
     // that will be in the "Body" property of the comment
 
-Note that second line has some optional "extensions" added as metadata to the issue by [tdg](https://github.com/ribtoks/tdg). Some are turned into labels and also used by [parent issue updater](https://github.com/ribtoks/parent-issue-update).
+Note that second line has some optional "extensions" added as metadata to the issue by [tdg](https://gitlab.com/ribtoks/tdg). Some are turned into labels and also used by [parent issue updater](https://github.com/ribtoks/parent-issue-update).

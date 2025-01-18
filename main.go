@@ -49,8 +49,10 @@ func sourceRoot(root string) string {
 
 type env struct {
 	root              string
-	owner             string
-	repo              string
+	codeOwner         string
+	codeRepo          string
+	issueOwner        string
+	issueRepo         string
 	label             string
 	token             string
 	sha               string
@@ -92,12 +94,19 @@ func flagToBool(s string) bool {
 }
 
 func environment() *env {
-	r := strings.Split(os.Getenv("INPUT_REPO"), "/")
+	cr := strings.Split(os.Getenv("INPUT_REPO"), "/")
+	ir := strings.Split(os.Getenv("INPUT_ISSUE_REPO"), "/")
+	if len(ir) == 0 {
+		ir = cr
+	}
+
 	ref := os.Getenv("INPUT_REF")
 	e := &env{
 		ref:               ref,
-		owner:             r[0],
-		repo:              r[1],
+		codeOwner:         cr[0],
+		codeRepo:          cr[1],
+		issueOwner:        ir[0],
+		issueRepo:         ir[1],
 		branch:            branch(ref),
 		sha:               os.Getenv("INPUT_SHA"),
 		root:              os.Getenv("INPUT_ROOT"),
@@ -148,7 +157,8 @@ func environment() *env {
 }
 
 func (e *env) debugPrint() {
-	log.Printf("Repo: %v", e.repo)
+	log.Printf("Code repo: %v", e.codeRepo)
+	log.Printf("Issue repo: %v", e.issueRepo)
 	log.Printf("Ref: %v", e.ref)
 	log.Printf("Sha: %v", e.sha)
 	log.Printf("Root: %v", e.root)
@@ -188,7 +198,7 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 	}
 
 	for {
-		issues, resp, err := s.client.Issues.ListByRepo(s.ctx, s.env.owner, s.env.repo, opt)
+		issues, resp, err := s.client.Issues.ListByRepo(s.ctx, s.env.issueOwner, s.env.issueRepo, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -248,7 +258,7 @@ func (s *service) createFileLink(c *tdglib.ToDoComment) string {
 
 	// https://github.com/{repo}/blob/{sha}/{file}#L{startLines}-L{endLine}
 	return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%v-L%v",
-		s.env.owner, s.env.repo, s.env.sha, safeFilepath, start, end)
+		s.env.codeOwner, s.env.codeRepo, s.env.sha, safeFilepath, start, end)
 }
 
 func (s *service) labels(c *tdglib.ToDoComment) []string {
@@ -331,7 +341,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 				Labels: &labels,
 			}
 
-			issue, _, err := s.client.Issues.Create(s.ctx, s.env.owner, s.env.repo, req)
+			issue, _, err := s.client.Issues.Create(s.ctx, s.env.issueOwner, s.env.issueRepo, req)
 			if err != nil {
 				log.Printf("Error while creating an issue. err=%v", err)
 				continue
@@ -367,7 +377,7 @@ func (s *service) assignNewIssues() {
 		req := &github.IssueRequest{
 			Assignees: &[]string{assignee},
 		}
-		if _, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, issueNumber, req); err != nil {
+		if _, _, err := s.client.Issues.Edit(s.ctx, s.env.issueOwner, s.env.issueRepo, issueNumber, req); err != nil {
 			log.Printf("Error while assigning %v to issue %v. err=%v", assignee, issueNumber, err)
 		} else {
 			log.Printf("Successfully assigned %v to issue %v.", assignee, issueNumber)
@@ -383,7 +393,7 @@ func (s *service) retrieveCommitAuthor(commitHash string, title string) {
 		return
 	}
 
-	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.owner, s.env.repo, commitHash, &github.ListOptions{})
+	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.codeOwner, s.env.codeRepo, commitHash, &github.ListOptions{})
 	if err != nil {
 		log.Printf("Error while getting commit from commit hash. err=%v", err)
 	} else if commit != nil && commit.Author != nil && len(*commit.Author.Login) > 0 {
@@ -445,7 +455,7 @@ func (s *service) commentIssue(body string, i *github.Issue) {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
-	_, _, err := s.client.Issues.CreateComment(s.ctx, s.env.owner, s.env.repo, i.GetNumber(), comment)
+	_, _, err := s.client.Issues.CreateComment(s.ctx, s.env.issueOwner, s.env.issueRepo, i.GetNumber(), comment)
 	if err != nil {
 		log.Printf("Error while adding a comment. issue=%v err=%v", i.ID, err)
 		return
@@ -495,7 +505,7 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		req := &github.IssueRequest{
 			State: &closed,
 		}
-		_, _, err := s.client.Issues.Edit(s.ctx, s.env.owner, s.env.repo, i.GetNumber(), req)
+		_, _, err := s.client.Issues.Edit(s.ctx, s.env.issueOwner, s.env.issueRepo, i.GetNumber(), req)
 
 		if err != nil {
 			log.Printf("Error while closing an issue. issue=%v err=%v", i.GetID(), err)

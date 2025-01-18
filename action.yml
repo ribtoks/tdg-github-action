@@ -3,7 +3,10 @@ description: "Sync TODO/BUG/FIXME comments with GitHub Issues and Projects"
 author: "Taras Kushnir"
 inputs:
   REPO:
-    description: "Repository"
+    description: "Code repository"
+    default: ""
+  ISSUE_REPO:
+    description: "Repository for issues"
     default: ""
   TOKEN:
     description: "Github token"
