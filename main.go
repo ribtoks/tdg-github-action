@@ -94,11 +94,14 @@ func flagToBool(s string) bool {
 }
 
 func environment() *env {
-	cr := strings.Split(os.Getenv("INPUT_REPO"), "/")
-	ir := strings.Split(os.Getenv("INPUT_ISSUE_REPO"), "/")
-	if len(ir) == 0 {
-		ir = cr
+	codeRepo := os.Getenv("INPUT_REPO")
+	cr := strings.Split(codeRepo, "/")
+
+	issueRepo := os.Getenv("INPUT_ISSUE_REPO")
+	if len(issueRepo) == 0 {
+		issueRepo = codeRepo
 	}
+	ir := strings.Split(issueRepo, "/")
 
 	ref := os.Getenv("INPUT_REF")
 	e := &env{
