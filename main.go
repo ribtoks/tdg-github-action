@@ -502,7 +502,11 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		}
 
 		if s.env.commentIssue {
-			s.commentIssue(fmt.Sprintf("Closed in commit %v", s.env.sha), i)
+			commitRef := s.env.sha
+			if (s.env.codeRepo != s.env.issueRepo) || (s.env.codeOwner != s.env.issueOwner) {
+				commitRef = fmt.Sprintf("%s/%s@%s", s.env.codeOwner, s.env.codeRepo, s.env.sha)
+			}
+			s.commentIssue(fmt.Sprintf("Closed in commit %v", commitRef), i)
 		}
 
 		req := &github.IssueRequest{
