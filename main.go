@@ -60,7 +60,6 @@ type env struct {
 	branch            string
 	includeRE         string
 	excludeRE         string
-	projectColumnID   int64
 	minWords          int
 	minChars          int
 	addLimit          int
@@ -151,10 +150,6 @@ func environment() *env {
 		e.concurrency = defaultConcurrency
 	}
 
-	e.projectColumnID, err = strconv.ParseInt(os.Getenv("INPUT_PROJECT_COLUMN_ID"), 10, 64)
-	if err != nil {
-		e.projectColumnID = -1
-	}
 
 	return e
 }
@@ -167,7 +162,6 @@ func (e *env) debugPrint() {
 	log.Printf("Root: %v", e.root)
 	log.Printf("Branch: %v", e.branch)
 	log.Printf("Label: %v", e.label)
-	log.Printf("Column ID: %v", e.projectColumnID)
 	log.Printf("Extended labels: %v", e.extendedLabels)
 	log.Printf("Min words: %v", e.minWords)
 	log.Printf("Min chars: %v", e.minChars)
@@ -296,11 +290,6 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 	return labels
 }
 
-func (s *service) createProjectCard(issue *github.Issue) {
-	// Project Cards API has been deprecated in GitHub API v73
-	// Projects v2 API should be used instead, but requires different implementation
-	log.Printf("Project card creation is not supported in GitHub API v73. issue=%v", issue.GetID())
-}
 
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
@@ -343,10 +332,6 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 
 			s.newIssuesMap[c.Title] = issue
 			log.Printf("Created an issue. title=%v issue=%v", c.Title, issue.GetID())
-
-			if s.env.projectColumnID != -1 {
-				s.createProjectCard(issue)
-			}
 
 			count++
 			if s.env.addLimit > 0 && count >= s.env.addLimit {

@@ -53,9 +53,6 @@ inputs:
   EXTENDED_LABELS:
     description: "Create additional labels to mark branch, issue type etc."
     default: "1"
-  PROJECT_COLUMN_ID:
-    description: "ID of the project column to move newly created issues to"
-    default: "-1"
   COMMENT_ON_ISSUES:
     description: "Create commit reference in the comments before closing the issue"
     default: "0"

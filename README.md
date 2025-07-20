@@ -3,7 +3,7 @@
 [![Build](https://github.com/ribtoks/tdg-github-action/workflows/Build/badge.svg)](https://github.com/ribtoks/tdg-github-action/actions)
 [![Integration Test](https://github.com/ribtoks/tdg-github-action/workflows/Integration%20Test/badge.svg)](https://github.com/ribtoks/tdg-github-action/actions)
 
-GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Optionally issues are added to a Project Column that you specify. Source code is parsed using [tdg](https://gitlab.com/ribtoks/tdg) which supports comments for almost all existing languages.
+GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comments in the source code. Source code is parsed using [tdg](https://gitlab.com/ribtoks/tdg) which supports comments for almost all existing languages.
 
 When a new todo comment is added, a new issue is created. When this comment is removed on the branch it was added, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
@@ -51,7 +51,6 @@ You can use this action together with [parent issue updater](https://github.com/
 | `LABEL`  | Label to add to the new issues (defaults to `todo comment`) |
 | `EXTENDED_LABELS`  | Add additional labels to mark branch, code language, issue type and estimate |
 | `CLOSE_ON_SAME_BRANCH`  | Close issues only if they are missing from the same branch as they were created on (by default) |
-| `PROJECT_COLUMN_ID`  | Automatically create a project card in this column for new issue (none by default) |
 | `INCLUDE_PATTERN`  | Regex to include source code files (includes all by default) |
 | `EXCLUDE_PATTERN`  | Regex to exclude source code files (excludes none by default) |
 | `MIN_WORDS`  | Minimum number of words in the comment to become an issue (defaults to `3`) |
@@ -67,7 +66,6 @@ You can use this action together with [parent issue updater](https://github.com/
 
 Flag values like `CLOSE_ON_SAME_BRANCH` or `DRY_RUN` use values `1`/`true`/`y` as ON switch.
 
-In order to get a column ID, you can go to your project and press "Copy column link" in the column 3 dots menu. ID is the last part of the URL `https://github.com/owner/repo/projects/5#column-823438` (ID would be `823438`).
 
 In case you are disabling `EXTENDED_LABELS`, then `CLOSE_ON_SAME_BRANCH` logic will be broken since there will be no knowledge on which branch the issue was created (for new issues), effectively making it disabled.
 
@@ -106,7 +104,6 @@ jobs:
         ADD_LIMIT: 1
         CLOSE_LIMIT: 1
         ROOT: "src"
-        PROJECT_COLUMN_ID: 824533
         INCLUDE_PATTERN: "\\.(cpp|h)$"
 ```
 
