@@ -2,7 +2,7 @@ module github.com/ribtoks/tdg-github-action
 
 go 1.23.0
 
-toolchain go1.23.5
+toolchain go1.24.5
 
 require (
 	github.com/google/go-github/v49 v49.1.0
