@@ -212,7 +212,7 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 			break
 		}
 
-		opt.Page = resp.NextPage
+		opt.ListOptions.Page = resp.NextPage
 	}
 	log.Printf("Fetched github todo issues. count=%v label=%v", len(allIssues), s.env.label)
 
@@ -297,18 +297,9 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 }
 
 func (s *service) createProjectCard(issue *github.Issue) {
-	opts := &github.ProjectCardOptions{
-		ContentType: "Issue",
-		ContentID:   issue.GetID(),
-	}
-	card, _, err := s.client.Projects.CreateProjectCard(s.ctx, s.env.projectColumnID, opts)
-
-	if err != nil {
-		log.Printf("Failed to create a project card. err=%v", err)
-		return
-	}
-
-	log.Printf("Created a project card. issue=%v card=%v", issue.GetID(), card.GetID())
+	// Project Cards API has been deprecated in GitHub API v73
+	// Projects v2 API should be used instead, but requires different implementation
+	log.Printf("Project card creation is not supported in GitHub API v73. issue=%v", issue.GetID())
 }
 
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
