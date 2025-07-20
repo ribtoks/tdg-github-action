@@ -1,12 +1,8 @@
 # github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 ## explicit
-# github.com/google/go-cmp v0.6.0
-## explicit; go 1.13
-# github.com/google/go-github/v49 v49.1.0
-## explicit; go 1.17
-github.com/google/go-github/v49/github
-# github.com/google/go-github/v66 v66.0.0
-## explicit; go 1.21
+# github.com/google/go-github/v73 v73.0.0
+## explicit; go 1.23.0
+github.com/google/go-github/v73/github
 # github.com/google/go-querystring v1.1.0
 ## explicit; go 1.10
 github.com/google/go-querystring/query
@@ -20,15 +16,6 @@ github.com/zieckey/goini
 # gitlab.com/ribtoks/tdg v0.0.7-1
 ## explicit; go 1.18
 gitlab.com/ribtoks/tdg/pkg/tdglib
-# golang.org/x/crypto v0.16.0
-## explicit; go 1.18
-golang.org/x/crypto/cast5
-golang.org/x/crypto/openpgp
-golang.org/x/crypto/openpgp/armor
-golang.org/x/crypto/openpgp/elgamal
-golang.org/x/crypto/openpgp/errors
-golang.org/x/crypto/openpgp/packet
-golang.org/x/crypto/openpgp/s2k
 # golang.org/x/oauth2 v0.27.0
 ## explicit; go 1.23.0
 golang.org/x/oauth2

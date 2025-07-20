@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/go-github/v49/github"
+	"github.com/google/go-github/v73/github"
 	"gitlab.com/ribtoks/tdg/pkg/tdglib"
 	"golang.org/x/oauth2"
 )
