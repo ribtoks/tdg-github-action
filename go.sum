@@ -22,6 +22,8 @@ github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26 h1:E0lEWrifmR0ACbGf5
 github.com/zieckey/goini v0.0.0-20180118150432-0da17d361d26/go.mod h1:TQpdgg7I9+PFIkatlx/dnZyZb4iZyCUx1HJj4rXi3+E=
 gitlab.com/ribtoks/tdg v0.0.7-1 h1:nKyCntmUgAZiz55y6nSmCKZc4dNJczQJZhT2qEXTK+g=
 gitlab.com/ribtoks/tdg v0.0.7-1/go.mod h1:XDYfJNbUbnnCW6lGCC2TLumDieEI04L0VtjVbgDKz1w=
+gitlab.com/ribtoks/tdg v0.0.8 h1:0X3LO0TcZr1imt5B1269S/qkcmJuQg7f5F6AjHNs6JM=
+gitlab.com/ribtoks/tdg v0.0.8/go.mod h1:XDYfJNbUbnnCW6lGCC2TLumDieEI04L0VtjVbgDKz1w=
 golang.org/x/oauth2 v0.30.0 h1:dnDm7JmhM45NNpd8FDDeLhK6FwqbOf4MLCM9zb1BOHI=
 golang.org/x/oauth2 v0.30.0/go.mod h1:B++QgG3ZKulg6sRPGD/mqlHQs5rB3Ml9erfeDY7xKlU=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=

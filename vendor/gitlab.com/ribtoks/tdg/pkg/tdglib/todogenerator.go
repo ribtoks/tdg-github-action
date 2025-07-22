@@ -133,7 +133,6 @@ func NewToDoGenerator(root string, include []string, exclude []string, blameFlag
 		blameFlag:  blameFlag,
 		blameMap:   make(map[string]*BlameDetails),
 		excludeSVC: true,
-		lineCount:  make(map[string]int),
 	}
 }
 
