@@ -1,13 +1,13 @@
 module github.com/ribtoks/tdg-github-action
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.6
 
 require (
 	github.com/google/go-github/v73 v73.0.0
 	gitlab.com/ribtoks/tdg v0.0.7-1
-	golang.org/x/oauth2 v0.30.0
+	golang.org/x/oauth2 v0.31.0
 )
 
 require (
