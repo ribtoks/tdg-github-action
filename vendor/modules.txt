@@ -16,7 +16,7 @@ github.com/zieckey/goini
 # gitlab.com/ribtoks/tdg v0.0.7-1
 ## explicit; go 1.18
 gitlab.com/ribtoks/tdg/pkg/tdglib
-# golang.org/x/oauth2 v0.31.0
+# golang.org/x/oauth2 v0.32.0
 ## explicit; go 1.24.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
