@@ -70,7 +70,7 @@ runs:
       shell: bash
       working-directory: ${{ github.action_path }}
       run: |
-        env GOFLAGS="-mod=vendor" CGO_ENABLED=0 go build -ldflags="-s -w -X main.GitCommit=${{ github.sha }}" -o tdg-github-action .
+        env GOFLAGS="-mod=vendor" CGO_ENABLED=0 go build -ldflags="-w -s -X main.GitCommit=${{ github.sha }}" -o tdg-github-action .
     - id: run-tdg
       name: Run tdg-github-action
       shell: bash
