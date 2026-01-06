@@ -7,6 +7,8 @@ GitHub Action that will manage issues based on `TODO`/`BUG`/`FIXME`/`HACK` comme
 
 When a new todo comment is added, a new issue is created. When this comment is removed on the branch it was added, the corresponding issue is closed. Each issue is added with a special label so you can build more automation on top of it.
 
+This action runs natively on the runner (no Docker image) and builds the Go binary during execution, so it remains cross-platform without needing a prebuilt download.
+
 ## Screenshot
 
 ![TDG result](screenshot.png "Example of created issue")

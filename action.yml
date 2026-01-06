@@ -60,8 +60,47 @@ inputs:
     description: "Get the author of the comment via git API from the commit hash of the comment and assign to the issue created"
     default: "0"
 runs:
-  using: "docker"
-  image: "Dockerfile"
+  using: "composite"
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: ${{ github.action_path }}/go.mod
+    - name: Build action binary
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        env GOFLAGS="-mod=vendor" CGO_ENABLED=0 go build -ldflags="-w -s -X main.GitCommit=${{ github.sha }}" -o tdg-github-action .
+    - id: run-tdg
+      name: Run tdg-github-action
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        INPUT_REPO: ${{ inputs.REPO }}
+        INPUT_ISSUE_REPO: ${{ inputs.ISSUE_REPO }}
+        INPUT_TOKEN: ${{ inputs.TOKEN }}
+        INPUT_INCLUDE_PATTERN: ${{ inputs.INCLUDE_PATTERN }}
+        INPUT_EXCLUDE_PATTERN: ${{ inputs.EXCLUDE_PATTERN }}
+        INPUT_ROOT: ${{ inputs.ROOT }}
+        INPUT_MIN_WORDS: ${{ inputs.MIN_WORDS }}
+        INPUT_MIN_CHARACTERS: ${{ inputs.MIN_CHARACTERS }}
+        INPUT_DRY_RUN: ${{ inputs.DRY_RUN }}
+        INPUT_CLOSE_ON_SAME_BRANCH: ${{ inputs.CLOSE_ON_SAME_BRANCH }}
+        INPUT_ADD_LIMIT: ${{ inputs.ADD_LIMIT }}
+        INPUT_CONCURRENCY: ${{ inputs.CONCURRENCY }}
+        INPUT_CLOSE_LIMIT: ${{ inputs.CLOSE_LIMIT }}
+        INPUT_LABEL: ${{ inputs.LABEL }}
+        INPUT_SHA: ${{ inputs.SHA }}
+        INPUT_REF: ${{ inputs.REF }}
+        INPUT_EXTENDED_LABELS: ${{ inputs.EXTENDED_LABELS }}
+        INPUT_COMMENT_ON_ISSUES: ${{ inputs.COMMENT_ON_ISSUES }}
+        INPUT_ASSIGN_FROM_BLAME: ${{ inputs.ASSIGN_FROM_BLAME }}
+      run: |
+        "${{ github.action_path }}/tdg-github-action"
+outputs:
+  scannedIssues:
+    description: "Equals to 1 if completed successfully"
+    value: ${{ steps.run-tdg.outputs.scannedIssues }}
 
 branding:
   icon: "check-square"
