@@ -9,7 +9,7 @@ ENV GOFLAGS="-mod=vendor"
 # Statically compile our app for use in the final container
 RUN CGO_ENABLED=0 go build -ldflags="-w -s -X main.GitCommit=${GIT_COMMIT}" -v -o app .
 
-FROM alpine:3.22
+FROM alpine:3.23
 
 COPY --from=builder /app/app /app
 
