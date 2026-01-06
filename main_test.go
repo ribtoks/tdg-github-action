@@ -13,7 +13,7 @@ func TestSourceRootUsesGitHubWorkspace(t *testing.T) {
 	}
 }
 
-func TestSourceRootAbsolute(t *testing.T) {
+func TestSourceRootWithLeadingSlash(t *testing.T) {
 	t.Setenv("GITHUB_WORKSPACE", "/tmp/workspace")
 
 	got := sourceRoot("/repo")
