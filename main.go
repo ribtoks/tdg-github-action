@@ -30,7 +30,6 @@ const (
 	defaultConcurrency   = 128
 	contextLinesUp       = 3
 	contextLinesDown     = 7
-	ghRoot               = "/github/workspace"
 	minEstimate          = 0.01
 	hourMinutes          = 60
 	labelBranchPrefix    = "branch: "
@@ -39,7 +38,16 @@ const (
 	labelLangPrefix      = "lang: "
 )
 
+func workspaceRoot() string {
+	if ws := os.Getenv("GITHUB_WORKSPACE"); ws != "" {
+		return ws
+	}
+
+	return "/github/workspace"
+}
+
 func sourceRoot(root string) string {
+	ghRoot := workspaceRoot()
 	if strings.HasPrefix(root, "/") {
 		return ghRoot + root
 	}
