@@ -203,5 +203,5 @@ func isRetryableGitHubError(err error) bool {
 	}
 
 	var netErr net.Error
-	return errors.As(err, &netErr)
+	return errors.As(err, &netErr) && netErr.Timeout()
 }
