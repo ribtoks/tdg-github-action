@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	defaultGitHubAPIRetries    = 4
-	defaultGitHubAPIRetryMin   = time.Second
-	defaultGitHubAPIRetryMax   = 10 * time.Second
+	defaultGitHubAPIRetries     = 4
+	defaultGitHubAPIRetryMin    = time.Second
+	defaultGitHubAPIRetryMax    = 10 * time.Second
 	defaultGitHubAPIRetryFactor = 2
 )
 
@@ -163,6 +163,10 @@ func (g *githubAPI) retry(ctx context.Context, operation string, fn func() error
 
 		err = fn()
 		if !isRetryableGitHubError(err) {
+			return err
+		}
+
+		if attempt == g.times-1 {
 			return err
 		}
 

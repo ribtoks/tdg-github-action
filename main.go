@@ -158,7 +158,6 @@ func environment() *env {
 		e.concurrency = defaultConcurrency
 	}
 
-
 	return e
 }
 
@@ -297,7 +296,6 @@ func (s *service) labels(c *tdglib.ToDoComment) []string {
 
 	return labels
 }
-
 
 func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*tdglib.ToDoComment) {
 	defer s.wg.Done()
