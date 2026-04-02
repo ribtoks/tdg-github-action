@@ -82,7 +82,7 @@ type env struct {
 
 type service struct {
 	ctx                     context.Context
-	client                  *github.Client
+	client                  *githubAPI
 	tdg                     *tdglib.ToDoGenerator
 	env                     *env
 	wg                      sync.WaitGroup
@@ -203,7 +203,7 @@ func (s *service) fetchGithubIssues() ([]*github.Issue, error) {
 	}
 
 	for {
-		issues, resp, err := s.client.Issues.ListByRepo(s.ctx, s.env.issueOwner, s.env.issueRepo, opt)
+		issues, resp, err := s.client.listByRepo(s.ctx, s.env.issueOwner, s.env.issueRepo, opt)
 		if err != nil {
 			return nil, err
 		}
@@ -332,7 +332,7 @@ func (s *service) openNewIssues(issueMap map[string]*github.Issue, comments []*t
 				Labels: &labels,
 			}
 
-			issue, _, err := s.client.Issues.Create(s.ctx, s.env.issueOwner, s.env.issueRepo, req)
+			issue, _, err := s.client.createIssue(s.ctx, s.env.issueOwner, s.env.issueRepo, req)
 			if err != nil {
 				log.Printf("Error while creating an issue. err=%v", err)
 				continue
@@ -364,7 +364,7 @@ func (s *service) assignNewIssues() {
 		req := &github.IssueRequest{
 			Assignees: &[]string{assignee},
 		}
-		if _, _, err := s.client.Issues.Edit(s.ctx, s.env.issueOwner, s.env.issueRepo, issueNumber, req); err != nil {
+		if _, _, err := s.client.editIssue(s.ctx, s.env.issueOwner, s.env.issueRepo, issueNumber, req); err != nil {
 			log.Printf("Error while assigning %v to issue %v. err=%v", assignee, issueNumber, err)
 		} else {
 			log.Printf("Successfully assigned %v to issue %v.", assignee, issueNumber)
@@ -380,7 +380,7 @@ func (s *service) retrieveCommitAuthor(commitHash string, title string) {
 		return
 	}
 
-	commit, _, err := s.client.Repositories.GetCommit(s.ctx, s.env.codeOwner, s.env.codeRepo, commitHash, &github.ListOptions{})
+	commit, _, err := s.client.getCommit(s.ctx, s.env.codeOwner, s.env.codeRepo, commitHash, &github.ListOptions{})
 	if err != nil {
 		log.Printf("Error while getting commit from commit hash. err=%v", err)
 	} else if commit != nil && commit.Author != nil && len(*commit.Author.Login) > 0 {
@@ -442,7 +442,7 @@ func (s *service) commentIssue(body string, i *github.Issue) {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
-	_, _, err := s.client.Issues.CreateComment(s.ctx, s.env.issueOwner, s.env.issueRepo, i.GetNumber(), comment)
+	_, _, err := s.client.createComment(s.ctx, s.env.issueOwner, s.env.issueRepo, i.GetNumber(), comment)
 	if err != nil {
 		log.Printf("Error while adding a comment. issue=%v err=%v", i.ID, err)
 		return
@@ -496,7 +496,7 @@ func (s *service) closeMissingIssues(issueMap map[string]*github.Issue, comments
 		req := &github.IssueRequest{
 			State: &closed,
 		}
-		_, _, err := s.client.Issues.Edit(s.ctx, s.env.issueOwner, s.env.issueRepo, i.GetNumber(), req)
+		_, _, err := s.client.editIssue(s.ctx, s.env.issueOwner, s.env.issueRepo, i.GetNumber(), req)
 
 		if err != nil {
 			log.Printf("Error while closing an issue. issue=%v err=%v", i.GetID(), err)
@@ -549,7 +549,7 @@ func main() {
 
 	svc := &service{
 		ctx:                     ctx,
-		client:                  github.NewClient(tc),
+		client:                  newGitHubAPI(github.NewClient(tc)),
 		env:                     env,
 		newIssuesMap:            make(map[string]*github.Issue),
 		issueTitleToAssigneeMap: make(map[string]string),
