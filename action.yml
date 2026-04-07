@@ -61,7 +61,7 @@ inputs:
     default: "0"
   SETUP_GO_CACHE:
     description: "Enable dependency caching in the internal setup-go step"
-    default: "1"
+    default: "true"
 runs:
   using: "composite"
   steps:
@@ -69,7 +69,7 @@ runs:
       uses: actions/setup-go@v6
       with:
         go-version-file: ${{ github.action_path }}/go.mod
-        cache: ${{ inputs.SETUP_GO_CACHE != '0' && inputs.SETUP_GO_CACHE != 'false' && inputs.SETUP_GO_CACHE != 'n' }}
+        cache: ${{ fromJSON(inputs.SETUP_GO_CACHE) }}
     - name: Build action binary
       shell: bash
       working-directory: ${{ github.action_path }}
