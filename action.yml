@@ -69,7 +69,7 @@ runs:
       uses: actions/setup-go@v6
       with:
         go-version-file: ${{ github.action_path }}/go.mod
-        cache: ${{ fromJSON(inputs.SETUP_GO_CACHE) }}
+        cache: ${{ inputs.SETUP_GO_CACHE == 'true' }}
     - name: Build action binary
       shell: bash
       working-directory: ${{ github.action_path }}
