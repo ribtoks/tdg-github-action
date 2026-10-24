@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/google/go-github/v73 v73.0.0
-	github.com/jpillora/backoff v1.0.0
+	github.com/jpillora/backoff v1.1.0
 	gitlab.com/ribtoks/tdg v0.0.7-1
 	golang.org/x/oauth2 v0.36.0
 )
